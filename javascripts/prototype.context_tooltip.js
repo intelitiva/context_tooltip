@@ -84,7 +84,7 @@ var ContextTooltip = Class.create({
     this.log("Registering mouse events.");
     
     // The show/hide events are binded to the mouse over and mouse out,
-    // respectively, for the tooltip element.
+    // respectively, for the context element.
     this.contextElement.observe('mouseover', this.displayBounded);
     this.contextElement.observe('mouseout', this.hideBounded);
     

@@ -21,8 +21,79 @@ function addContextTooltip(tooltip_elements, options) {
     var options = $.extend(defaults, given_options);
 
     return this.each(function() {
-      obj = $(this);
-      
+      tooltip = $(this);
+      context = tooltip.parent();
+
+      initializeContextTooltip(tooltip, context, options);
     });
+
+    function initializeContextTooltip(tooltip, context, options) {
+      tooltip.hide();
+
+      if (options.onWindowLoad) {
+        $(document).ready(function(){
+          registerMouseEvents(tooltip, context, options);
+        })
+      }
+      else {
+        registerMouseEvents(tooltip, context, options);
+      }
+    }
+
+    function registerMouseEvents(tooltip, context, options) {
+      registerTooltipMouseEvents(tooltip, context, options);
+      registerContextMouseEvents(tooltip, context, options);
+    }
+
+    function registerTooltipMouseEvents(tooltip, context, options) {
+      if (options.click == 'hide') {
+        tooltip.mousedown(function() { hideWithoutEffect(tooltip, context, options) });
+      }
+    }
+
+    function registerContextMouseEvents(tooltip, context, options) {
+      context.mouseover(function() { display(tooltip, context, options); })
+      context.mouseout(function() { hide(tooltip, context, options); })
+
+      if (options.contextClick == 'hide') {
+        context.mousedown(function() { contextGrabbed(tooltip, context, options) });
+        context.mousedown(function() { hideWithoutEffect(tooltip, context, options) });
+        context.mouseup(function() { contextReleased(tooltip, context, options) });
+      }
+    }
+
+    function display(tooltip, context, options) {
+      if (!tooltip.is(':visible')) {
+        if (options.displayEffect == 'appear') {
+          tooltip.fadeIn(options.displayEffectOptions.duration * 1000);
+        }
+        else {
+          tooltip.show();
+        }
+      }
+    }
+
+    function hide(tooltip, context, options) {
+      if (tooltip.is(':visible')) {
+        if (options.hideEffect == 'fade') {
+          tooltip.fadeOut(options.hideEffectOptions.duration * 1000);
+        }
+        else {
+          tooltip.hide();
+        }
+      }
+    }
+
+    function hideWithoutEffect(tooltip, context, options) {
+      tooltip.hide();
+    }
+
+    function contextGrabbed(tooltip, context, options) {
+
+    }
+
+    function contextReleased(tooltip, context, options) {
+
+    }
   };
 })(jQuery);
