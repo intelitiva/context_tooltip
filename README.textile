@@ -1,0 +1,19 @@
+h1. ContextTooltip
+
+A plugin for adding context tooltips in a rails application.
+
+The content of context tooltips are normally an element which is defined inside
+another element, or the tooltip "context". The contents of common tooltips are
+usually defined as the title attribute of some element.
+
+h2. Usage
+
+You can call this helper method in any of your templates:
+
+<pre>
+  context_tooltip(tooltip_id, options = {})
+</pre>
+
+h2. Credits
+
+Vicente Mundim (vicente.mundim@gmail.com)
