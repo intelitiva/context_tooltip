@@ -225,6 +225,6 @@ var ContextTooltip = Class.create({
 
 function init_unobtrusive_context_tooltip() {
   $$('.tooltip').each(function(element) {
-    new ContextTooltip(element, element.up(), { onWindowLoad: false });
+    new ContextTooltip(element, { onWindowLoad: false });
   })
 }

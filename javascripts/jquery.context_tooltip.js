@@ -2,98 +2,133 @@ function addContextTooltip(tooltip_elements, options) {
   $(tooltip_elements).context_tooltip(options);
 }
 
-(function($){
-  $.fn.context_tooltip = function(given_options) {
+function ContextTooltip(tooltipElement, contextElement, options) {
+  this.tooltipElement = tooltipElement;
+  this.contextElement = contextElement;
 
-    var defaults = {
-      onWindowLoad: true,
-      delayed: true,
-      delay: 0.2,
-      contextClick: 'hide', // Possible values: hide, keep; Hides or keeps the tooltip when the context is clicked.
-      click: 'hide', // Possible values: hide, keep; Hides or keeps the tooltip on click.
-      hover: 'keep', // Possible values: hide, keep; Hides or keeps the tooltip on hover.
-      displayEffect: 'appear',
-      displayEffectOptions: { duration: 0.2 },
-      hideEffect: 'fade',
-      hideEffectOptions: { duration: 0.2 }
-    };
+  this.tooltipElement.hide();
 
-    var options = $.extend(defaults, given_options);
+  this.keepVisibleTimeout = false;
 
-    return this.each(function() {
-      tooltip = $(this);
-      context = tooltip.parent();
+  this.enabled = true;
 
-      initializeContextTooltip(tooltip, context, options);
-    });
+  this.isContextBeingGrabbed = false;
 
-    function initializeContextTooltip(tooltip, context, options) {
-      tooltip.hide();
+  this.defaults = {
+    onWindowLoad: true,
+    delayed: true,
+    delay: 0.2,
+    contextClick: 'hide', // Possible values: hide, keep; Hides or keeps the tooltip when the context is clicked.
+    click: 'hide', // Possible values: hide, keep; Hides or keeps the tooltip on click.
+    hover: 'keep', // Possible values: hide, keep; Hides or keeps the tooltip on hover.
+    displayEffect: 'appear',
+    displayEffectOptions: { duration: 0.2 },
+    hideEffect: 'fade',
+    hideEffectOptions: { duration: 0.2 }
+  }
+  this.options = $.extend(this.defaults, options);
 
-      if (options.onWindowLoad) {
-        $(document).ready(function(){
-          registerMouseEvents(tooltip, context, options);
-        })
+  this.createBoundedMethods();
+
+  this.registerMouseEvents();
+}
+
+ContextTooltip.prototype = {
+  createBoundedMethods: function() {
+    this.createBoundedMethod('_registerMouseEvents');
+    this.createBoundedMethod('display');
+    this.createBoundedMethod('hide');
+    this.createBoundedMethod('hideWithoutEffect');
+    this.createBoundedMethod('keepVisible');
+    this.createBoundedMethod('contextGrabbed');
+    this.createBoundedMethod('contextReleased');
+  },
+
+  createBoundedMethod: function(methodName) {
+    var self = this;
+    self[methodName + "Bounded"] = function(event) {
+      return self[methodName].apply(self, [event || window.event].concat(arguments));
+    }
+  },
+
+  registerMouseEvents: function() {
+    if (this.options.onWindowLoad) {
+      $(document).ready(this._registerMouseEventsBounded);
+    }
+    else {
+      this._registerMouseEvents();
+    }
+  },
+
+  _registerMouseEvents: function() {
+    this.registerTooltipMouseEvents();
+    this.registerContextMouseEvents();
+  },
+
+  registerTooltipMouseEvents: function() {
+    if (this.options.click == 'hide') {
+      this.tooltipElement.mousedown(this.hideWithoutEffectBounded);
+    }
+  },
+
+  registerContextMouseEvents: function() {
+    this.contextElement.mouseover(this.displayBounded)
+    this.contextElement.mouseout(this.hideBounded)
+
+    if (this.options.contextClick == 'hide') {
+      this.contextElement.mousedown(this.contextGrabbedBounded);
+      this.contextElement.mousedown(this.hideWithoutEffectBounded);
+      this.contextElement.mouseup(this.contextReleasedBounded);
+    }
+  },
+
+  display: function() {
+    if (!this.tooltipElement.is(':visible')) {
+      if (this.options.displayEffect == 'appear') {
+        this.tooltipElement.fadeIn(this.options.displayEffectOptions.duration * 1000);
       }
       else {
-        registerMouseEvents(tooltip, context, options);
+        this.tooltipElement.show();
       }
     }
+  },
 
-    function registerMouseEvents(tooltip, context, options) {
-      registerTooltipMouseEvents(tooltip, context, options);
-      registerContextMouseEvents(tooltip, context, options);
-    }
-
-    function registerTooltipMouseEvents(tooltip, context, options) {
-      if (options.click == 'hide') {
-        tooltip.mousedown(function() { hideWithoutEffect(tooltip, context, options) });
+  hide: function() {
+    if (this.tooltipElement.is(':visible')) {
+      if (this.options.hideEffect == 'fade') {
+        this.tooltipElement.fadeOut(this.options.hideEffectOptions.duration * 1000);
+      }
+      else {
+        this.tooltipElement.hide();
       }
     }
+  },
 
-    function registerContextMouseEvents(tooltip, context, options) {
-      context.mouseover(function() { display(tooltip, context, options); })
-      context.mouseout(function() { hide(tooltip, context, options); })
+  hideWithoutEffect: function() {
+    this.tooltipElement.hide();
+  },
 
-      if (options.contextClick == 'hide') {
-        context.mousedown(function() { contextGrabbed(tooltip, context, options) });
-        context.mousedown(function() { hideWithoutEffect(tooltip, context, options) });
-        context.mouseup(function() { contextReleased(tooltip, context, options) });
-      }
-    }
+  keepVisible: function() {
+    
+  },
 
-    function display(tooltip, context, options) {
-      if (!tooltip.is(':visible')) {
-        if (options.displayEffect == 'appear') {
-          tooltip.fadeIn(options.displayEffectOptions.duration * 1000);
-        }
-        else {
-          tooltip.show();
-        }
-      }
-    }
+  contextGrabbed: function() {
 
-    function hide(tooltip, context, options) {
-      if (tooltip.is(':visible')) {
-        if (options.hideEffect == 'fade') {
-          tooltip.fadeOut(options.hideEffectOptions.duration * 1000);
-        }
-        else {
-          tooltip.hide();
-        }
-      }
-    }
+  },
 
-    function hideWithoutEffect(tooltip, context, options) {
-      tooltip.hide();
-    }
+  contextReleased: function() {
 
-    function contextGrabbed(tooltip, context, options) {
+  }
+};
 
-    }
-
-    function contextReleased(tooltip, context, options) {
-
-    }
+(function($){
+  $.fn.context_tooltip = function(options) {
+    return this.each(function() {
+      new ContextTooltip($(this), $(this).parent(), options);
+    });
   };
 })(jQuery);
+
+function init_unobtrusive_context_tooltip() {
+  $('.tooltip').context_tooltip();
+}
