@@ -2,18 +2,19 @@ function addContextTooltip(tooltip_elements, options) {
   $(tooltip_elements).context_tooltip(options);
 }
 
-function ContextTooltip(tooltipElement, contextElement, options) {
-  this.tooltipElement = tooltipElement;
-  this.contextElement = contextElement;
+function ContextTooltip(tooltipElement, options) {
+  this.tooltipElement = $(tooltipElement);
+  this.contextElement = this.tooltipElement.parent();
 
+  // Hiding the tooltip element.
   this.tooltipElement.hide();
 
+  // Initializing some utility flags.
   this.keepVisibleTimeout = false;
-
   this.enabled = true;
-
   this.isContextBeingGrabbed = false;
 
+  // Setting options based on the given options and the defaults.
   this.defaults = {
     onWindowLoad: true,
     delayed: true,
@@ -28,14 +29,24 @@ function ContextTooltip(tooltipElement, contextElement, options) {
   }
   this.options = $.extend(this.defaults, options);
 
-  this.createBoundedMethods();
+  // If an element with this id is set, we will update it every time a log
+  // is added.
+  this._logger = $('#javascript-log');
 
-  this.registerMouseEvents();
+  this.createBoundedMethods();
+  this.registerMouseEventsDelayedIfNecessary();
 }
 
 ContextTooltip.prototype = {
+  log: function(msg) {
+    if (this._logger != null) {
+      this._logger.append("<p>" + Date() + " " + msg + " [" + this.tooltipElement.attr('id') + "/" + this.contextElement.attr('id') + "]" + "</p>");
+      this._logger.scrollTop = this._logger.scrollHeight;
+    }
+  },
+  
   createBoundedMethods: function() {
-    this.createBoundedMethod('_registerMouseEvents');
+    this.createBoundedMethod('registerMouseEvents');
     this.createBoundedMethod('display');
     this.createBoundedMethod('hide');
     this.createBoundedMethod('hideWithoutEffect');
@@ -51,34 +62,54 @@ ContextTooltip.prototype = {
     }
   },
 
-  registerMouseEvents: function() {
+  registerMouseEventsDelayedIfNecessary: function() {
+    // Checking if we need to wait for the whole window document to be loaded
+    // before registering the events.
     if (this.options.onWindowLoad) {
-      $(document).ready(this._registerMouseEventsBounded);
+      this.log("Registering events on window load.");
+      $(document).ready(this.registerMouseEventsBounded);
     }
     else {
-      this._registerMouseEvents();
+      // Registering the events right away (useful when adding tooltips after
+      // the page is loaded, i.e., ajax calls).
+      this.log("Registering events right now.");
+      this.registerMouseEvents();
     }
   },
 
-  _registerMouseEvents: function() {
+  registerMouseEvents: function() {
+    this.log("Registering mouse events.");
     this.registerTooltipMouseEvents();
     this.registerContextMouseEvents();
+    this.log("Mouse events registered.");
   },
 
   registerTooltipMouseEvents: function() {
     if (this.options.click == 'hide') {
+      this.log("Clicking on the tooltip will hide it.");
       this.tooltipElement.mousedown(this.hideWithoutEffectBounded);
+    }
+    else {
+      this.log("Clicking on the tooltip will keep it visible.");
     }
   },
 
   registerContextMouseEvents: function() {
-    this.contextElement.mouseover(this.displayBounded)
-    this.contextElement.mouseout(this.hideBounded)
+    // The show/hide events are binded to the mouse over and mouse out,
+    // respectively, for the context element.
+    this.contextElement.mouseover(this.displayBounded);
+    this.contextElement.mouseout(this.hideBounded);
+
+    // Triggering context grabbed and released events on clicks.
+    this.contextElement.mousedown(this.contextGrabbedBounded);
+    this.contextElement.mouseup(this.contextReleasedBounded);
 
     if (this.options.contextClick == 'hide') {
-      this.contextElement.mousedown(this.contextGrabbedBounded);
+      this.log("Clicking on the context will hide the tooltip.");
       this.contextElement.mousedown(this.hideWithoutEffectBounded);
-      this.contextElement.mouseup(this.contextReleasedBounded);
+    }
+    else {
+      this.log("Clicking on the context will keep the tooltip visible.");
     }
   },
 
@@ -124,7 +155,7 @@ ContextTooltip.prototype = {
 (function($){
   $.fn.context_tooltip = function(options) {
     return this.each(function() {
-      new ContextTooltip($(this), $(this).parent(), options);
+      new ContextTooltip($(this), options);
     });
   };
 })(jQuery);
