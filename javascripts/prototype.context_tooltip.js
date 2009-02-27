@@ -13,12 +13,15 @@ var ContextTooltip = Class.create({
     this.tooltipElement.hide();
 
     this.keepVisibleTimeout = false;
+    this.keepHiddenTimeout = false;
     this.isContextBeingGrabbed = false;
 
     this.options = {
       onWindowLoad: true,
-      delayed: true,
-      delay: 0.2,
+      delayWhenDisplaying: true,
+      delayWhenHiding: true,
+      displayDelay: 2,
+      hideDelay: 2,
       contextClick: 'hide', // Possible values: hide, keep; Hides or keeps the tooltip when the context is clicked.
       click: 'hide', // Possible values: hide, keep; Hides or keeps the tooltip on click.
       hover: 'keep', // Possible values: hide, keep; Hides or keeps the tooltip on hover.
@@ -111,7 +114,20 @@ var ContextTooltip = Class.create({
   },
   
   display: function(event) {
-    if (!this.tooltipElement.visible() && !this.isContextBeingGrabbed) {
+    if (this.options.delayWhenDisplaying) {
+      this.displayDelayed(event);
+    }
+    else {
+      this.displayNow(event);
+    }
+  },
+
+  displayDelayed: function(event) {
+    this.callDelayed(this.options.displayDelay, "displayNow", event);
+  },
+
+  displayNow: function(event) {
+    if (this.shouldDisplay(event)) {
       this.log("Displaying tooltip.");
       
       var displayEffect = this.displayEffect();
@@ -132,18 +148,22 @@ var ContextTooltip = Class.create({
       return null;
     }
   },
+
+  shouldDisplay: function(event) {
+    return (!this.tooltipElement.visible() && !this.isContextBeingGrabbed && this.mouseInContextOrTooltip(event));
+  },
   
   hide: function(event) {
-    if (this.options.delayed) {
+    if (this.options.delayWhenHiding) {
       this.hideDelayed(event);
     }
     else {
-      this.hideNow(this);
+      this.hideNow(event);
     }
   },
 
   hideDelayed: function(event) {
-    this.keepVisibleTimeout = this.hideNow.delay(this.options.delay, this);
+    this.keepVisibleTimeout = this.callDelayed(this.options.hideDelay, "hideNow", event);
     if (this.options.hover == 'keep') {
       this.tooltipElement.observe('mouseover', this.keepVisibleBounded);
     }
@@ -156,22 +176,22 @@ var ContextTooltip = Class.create({
     }
   },
   
-  hideNow: function(object) {
-    if (object.tooltipElement.visible()) {
-      object.log("Hiding tooltip.");
+  hideNow: function(event) {
+    if (this.shouldHide(event)) {
+      this.log("Hiding tooltip.");
 
-      var hideEffect = object.hideEffect();
+      var hideEffect = this.hideEffect();
       if (hideEffect == null) {
-        object.tooltipElement.hide();
+        this.tooltipElement.hide();
       }
       else {
-        new hideEffect(object.tooltipElement, object.options.hideEffectOptions);
+        new hideEffect(this.tooltipElement, this.options.hideEffectOptions);
       }
       
-      if (object.options.hover == 'keep') {
-        object.tooltipElement.stopObserving('mouseover', object.keepVisibleBounded);
+      if (this.options.hover == 'keep') {
+        this.tooltipElement.stopObserving('mouseover', this.keepVisibleBounded);
       }
-      object.contextElement.stopObserving('mouseover', object.keepVisibleBounded);
+      this.contextElement.stopObserving('mouseover', this.keepVisibleBounded);
     }
   },
 
@@ -182,6 +202,10 @@ var ContextTooltip = Class.create({
     else {
       return null;
     }
+  },
+
+  shouldHide: function(event) {
+    return (this.tooltipElement.visible() && !this.mouseInContextOrTooltip(event));
   },
   
   hideByClick: function(event) {
@@ -216,6 +240,31 @@ var ContextTooltip = Class.create({
       window.clearTimeout(this.keepVisibleTimeout)
       this.keepVisibleTimeout = false;
     }
+  },
+
+  mouseInContextOrTooltip: function(event) {
+    // TODO: Get current mouse position using document.observe("mousemove")
+
+    // This code gets the mouse when the event was fired, so it does not works well.
+    if (this.isContainedByEvent(this.contextElement, event)) {
+      this.log("Mouse over context element.");
+      return true;
+    }
+    else if (this.isContainedByEvent(this.tooltipElement, event)) {
+      this.log("Mouse over tooltip element.");
+      return true;
+    }
+    else {
+      this.log("Mouse is not over context nor tooltip element.");
+      return false;
+    }
+  },
+
+  callDelayed: function(delay, methodName, event) {
+    var self = this;
+    return window.setTimeout(function() {
+      self[methodName].apply(self, [event || window.event]);
+    }, delay * 1000);
   }
 });
 
