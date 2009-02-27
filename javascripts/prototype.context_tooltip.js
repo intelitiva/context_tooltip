@@ -113,7 +113,23 @@ var ContextTooltip = Class.create({
   display: function(event) {
     if (!this.tooltipElement.visible() && !this.isContextBeingGrabbed) {
       this.log("Displaying tooltip.");
-      new this.options.displayEffect(this.tooltipElement, this.options.displayEffectOptions);
+      
+      var displayEffect = this.displayEffect();
+      if (displayEffect == null) {
+        this.tooltipElement.show();
+      }
+      else {
+        new displayEffect(this.tooltipElement, this.options.displayEffectOptions);
+      }
+    }
+  },
+
+  displayEffect: function() {
+    if (this.options.displayEffect == 'appear') {
+      return Effect.Appear;
+    }
+    else {
+      return null;
     }
   },
   
@@ -139,12 +155,28 @@ var ContextTooltip = Class.create({
   _hide: function(object) {
     if (object.tooltipElement.visible()) {
       object.log("Hiding tooltip.");
-      new object.options.hideEffect(object.tooltipElement, object.options.hideEffectOptions);
+
+      var hideEffect = object.hideEffect();
+      if (hideEffect == null) {
+        object.tooltipElement.hide();
+      }
+      else {
+        new hideEffect(object.tooltipElement, object.options.hideEffectOptions);
+      }
       
       if (object.options.hover == 'keep') {
         object.tooltipElement.stopObserving('mouseover', object.keepVisibleBounded);
       }
       object.contextElement.stopObserving('mouseover', object.keepVisibleBounded);
+    }
+  },
+
+  hideEffect: function() {
+    if (this.options.hideEffect == 'fade') {
+      return Effect.Fade;
+    }
+    else {
+      return null;
     }
   },
   
