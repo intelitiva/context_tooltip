@@ -52,7 +52,7 @@ var ContextTooltip = Class.create({
     this.createBoundedMethod('contextReleasedEvent');
     this.createBoundedMethod('registerMouseEvents');
     this.createBoundedMethod('log');
-    this.createBoundedMethod('hideWithoutEffect');
+    this.createBoundedMethod('hideByClick');
   },
   
   createBoundedMethod: function(methodName) {
@@ -84,7 +84,7 @@ var ContextTooltip = Class.create({
   registerTooltipMouseEvents: function() {
     if (this.options.click == 'hide') {
       this.log("Clicking on the tooltip will hide it.");
-      this.tooltipElement.observe('mousedown', this.hideWithoutEffectBounded);
+      this.tooltipElement.observe('mousedown', this.hideByClickBounded);
     }
     else {
       this.log("Clicking on the tooltip will keep it visible.");
@@ -103,7 +103,7 @@ var ContextTooltip = Class.create({
 
     if (this.options.contextClick == 'hide') {
       this.log("Clicking on the context will hide the tooltip.");
-      this.contextElement.observe('mousedown', this.hideWithoutEffectBounded);
+      this.contextElement.observe('mousedown', this.hideByClickBounded);
     }
     else {
       this.log("Clicking on the context will keep the tooltip visible.");
@@ -135,24 +135,28 @@ var ContextTooltip = Class.create({
   
   hide: function(event) {
     if (this.options.delayed) {
-      this.keepVisibleTimeout = this._hide.delay(this.options.delay, this);
-      if (this.options.hover == 'keep') {
-        this.tooltipElement.observe('mouseover', this.keepVisibleBounded);
-      }
-      
-      if (this.isContainedByEvent(this.contextElement, event)) {
-        this.contextElement.observe('mouseover', this.keepVisibleBounded);
-      }
-      else if (this.options.hover != 'keep') {
-        this.contextElement.stopObserving('mouseover', this.keepVisibleBounded);
-      }
+      this.hideDelayed(event);
     }
     else {
-      this._hide(this);
+      this.hideNow(this);
+    }
+  },
+
+  hideDelayed: function(event) {
+    this.keepVisibleTimeout = this.hideNow.delay(this.options.delay, this);
+    if (this.options.hover == 'keep') {
+      this.tooltipElement.observe('mouseover', this.keepVisibleBounded);
+    }
+
+    if (this.isContainedByEvent(this.contextElement, event)) {
+      this.contextElement.observe('mouseover', this.keepVisibleBounded);
+    }
+    else if (this.options.hover != 'keep') {
+      this.contextElement.stopObserving('mouseover', this.keepVisibleBounded);
     }
   },
   
-  _hide: function(object) {
+  hideNow: function(object) {
     if (object.tooltipElement.visible()) {
       object.log("Hiding tooltip.");
 
@@ -180,10 +184,10 @@ var ContextTooltip = Class.create({
     }
   },
   
-  hideWithoutEffect: function(event) {
+  hideByClick: function(event) {
     if ((this.options.contextClick == 'hide' && this.isContainedByEvent(this.contextElement, event)) ||
-        (this.options.click == 'hide' && event.element().descendantOf(this.tooltipElement))) {
-      this.log("Hiding tooltip without effect.");
+        (this.options.click == 'hide' && (event.element().descendantOf(this.tooltipElement)) || event.element() == this.tooltipElement)) {
+      this.log("Hiding tooltip by click event.");
       this.tooltipElement.hide();
     }
   },
