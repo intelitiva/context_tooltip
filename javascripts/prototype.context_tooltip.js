@@ -8,7 +8,7 @@ function addContextTooltip(tooltip_elements, options) {
   })
 }
 
-function closeTooltip(tooltip_element_id) {
+function closeContextTooltip(tooltip_element_id) {
   var context_tooltip = context_tooltips.get(tooltip_element_id);
   context_tooltip.hideWithoutCheck();
 }
@@ -21,10 +21,10 @@ var ContextTooltip = Class.create({
     // Hiding the tooltip element.
     this.tooltipElement.hide();
 
-    this.keepVisibleTimeout = false;
-    this.keepHiddenTimeout = false;
+    // Initializing some utility flags.
     this.isContextBeingGrabbed = false;
 
+    // Used to hold current mouse position.
     this.currentMouseX = 0;
     this.currentMouseY = 0;
 
@@ -37,7 +37,6 @@ var ContextTooltip = Class.create({
       hideDelay: 0.2,
       contextClick: 'hide', // Possible values: hide, keep; Hides or keeps the tooltip when the context is clicked.
       click: 'hide', // Possible values: hide, keep; Hides or keeps the tooltip on click.
-      hover: 'keep', // Possible values: hide, keep; Hides or keeps the tooltip on hover.
       displayEffect: 'appear', // Possible values: appear, none;
       displayEffectOptions: { duration: 0.5 },
       hideEffect: 'fade', // Possible values: fade, none;
