@@ -1,7 +1,16 @@
+// This globar variable holds a reference for each tooltip added, keyed by its
+// HTML ID.
+var context_tooltips = $H();
+
 function addContextTooltip(tooltip_elements, options) {
   $$(tooltip_elements).each(function(element) {
-    new ContextTooltip(element, options);
+    context_tooltips.set(element.id, new ContextTooltip(element, options));
   })
+}
+
+function closeTooltip(tooltip_element_id) {
+  var context_tooltip = context_tooltips.get(tooltip_element_id);
+  context_tooltip.hideWithoutCheck();
 }
 
 var ContextTooltip = Class.create({
@@ -21,6 +30,7 @@ var ContextTooltip = Class.create({
 
     this.options = {
       onWindowLoad: true,
+      displayWhenClicked: true,
       delayWhenDisplaying: true,
       delayWhenHiding: true,
       displayDelay: 0.2,
@@ -29,9 +39,9 @@ var ContextTooltip = Class.create({
       click: 'hide', // Possible values: hide, keep; Hides or keeps the tooltip on click.
       hover: 'keep', // Possible values: hide, keep; Hides or keeps the tooltip on hover.
       displayEffect: 'appear', // Possible values: appear, none;
-      displayEffectOptions: { duration: 0.2 },
+      displayEffectOptions: { duration: 0.8 },
       hideEffect: 'fade', // Possible values: fade, none;
-      hideEffectOptions: { duration: 0.2 }
+      hideEffectOptions: { duration: 0.8 }
     };
     Object.extend(this.options, options || { });
     
@@ -53,6 +63,8 @@ var ContextTooltip = Class.create({
   createBoundedMethods: function() {
     this.createBoundedMethod('display');
     this.createBoundedMethod('hide');
+    this.createBoundedMethod('displayWithoutCheck');
+    this.createBoundedMethod('hideWithoutCheck');
     this.createBoundedMethod('contextGrabbedEvent');
     this.createBoundedMethod('contextReleasedEvent');
     this.createBoundedMethod('registerMouseEvents');
@@ -95,31 +107,44 @@ var ContextTooltip = Class.create({
   },
 
   registerTooltipMouseEvents: function() {
-    if (this.options.click == 'hide') {
-      this.log("Clicking on the tooltip will hide it.");
-      this.tooltipElement.observe('mousedown', this.hideByClickBounded);
+    if (this.options.displayWhenClicked) {
+      $$('.tooltip .close').invoke('observe', 'click', this.hideByClickBounded);
     }
     else {
-      this.log("Clicking on the tooltip will keep it visible.");
+      if (this.options.click == 'hide') {
+        this.log("Clicking on the tooltip will hide it.");
+        this.tooltipElement.observe('mousedown', this.hideByClickBounded);
+      }
+      else {
+        this.log("Clicking on the tooltip will keep it visible.");
+      }
     }
   },
 
   registerContextMouseEvents: function() {
-    // The show/hide events are binded to the mouse over and mouse out,
-    // respectively, for the context element.
-    this.contextElement.observe('mouseover', this.displayBounded);
-    this.contextElement.observe('mouseout', this.hideBounded);
-
-    // Triggering context grabbed and released events on clicks.
-    this.contextElement.observe('mousedown', this.contextGrabbedEventBounded);
-    this.contextElement.observe('mouseup', this.contextReleasedEventBounded);
-
-    if (this.options.contextClick == 'hide') {
-      this.log("Clicking on the context will hide the tooltip.");
-      this.contextElement.observe('mousedown', this.hideByClickBounded);
+    if (this.options.displayWhenClicked) {
+      this.log("Tooltip will be displayed when clicked.");
+      this.contextElement.observe('click', this.displayWithoutCheckBounded);
     }
     else {
-      this.log("Clicking on the context will keep the tooltip visible.");
+      this.log("Tooltip will be displayed when hovered.");
+
+      // The show/hide events are binded to the mouse over and mouse out,
+      // respectively, for the context element.
+      this.contextElement.observe('mouseover', this.displayBounded);
+      this.contextElement.observe('mouseout', this.hideBounded);
+
+      // Triggering context grabbed and released events on clicks.
+      this.contextElement.observe('mousedown', this.contextGrabbedEventBounded);
+      this.contextElement.observe('mouseup', this.contextReleasedEventBounded);
+
+      if (this.options.contextClick == 'hide') {
+        this.log("Clicking on the context will hide the tooltip.");
+        this.contextElement.observe('mousedown', this.hideByClickBounded);
+      }
+      else {
+        this.log("Clicking on the context will keep the tooltip visible.");
+      }
     }
   },
   
@@ -139,14 +164,17 @@ var ContextTooltip = Class.create({
   displayNow: function() {
     if (this.shouldDisplay()) {
       this.log("Displaying tooltip.");
-      
-      var displayEffect = this.displayEffect();
-      if (displayEffect == null) {
-        this.tooltipElement.show();
-      }
-      else {
-        new displayEffect(this.tooltipElement, this.options.displayEffectOptions);
-      }
+      this.displayWithoutCheck();
+    }
+  },
+
+  displayWithoutCheck: function() {
+    var displayEffect = this.displayEffect();
+    if (displayEffect == null) {
+      this.tooltipElement.show();
+    }
+    else {
+      new displayEffect(this.tooltipElement, this.options.displayEffectOptions);
     }
   },
 
@@ -179,7 +207,6 @@ var ContextTooltip = Class.create({
   hideNow: function() {
     if (this.shouldHide()) {
       this.log("Hiding tooltip.");
-
       this.hideWithoutCheck();
     }
   },
@@ -285,6 +312,6 @@ var ContextTooltip = Class.create({
 
 function init_unobtrusive_context_tooltip() {
   $$('.tooltip').each(function(element) {
-    new ContextTooltip(element, { onWindowLoad: false });
+    context_tooltips.set(element.id, new ContextTooltip(element, { onWindowLoad: false }));
   })
 }
