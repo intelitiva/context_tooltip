@@ -30,7 +30,7 @@ var ContextTooltip = Class.create({
 
     this.options = {
       onWindowLoad: true,
-      displayWhenClicked: true,
+      displayWhenClicked: false,
       delayWhenDisplaying: true,
       delayWhenHiding: true,
       displayDelay: 0.2,
@@ -39,9 +39,9 @@ var ContextTooltip = Class.create({
       click: 'hide', // Possible values: hide, keep; Hides or keeps the tooltip on click.
       hover: 'keep', // Possible values: hide, keep; Hides or keeps the tooltip on hover.
       displayEffect: 'appear', // Possible values: appear, none;
-      displayEffectOptions: { duration: 0.8 },
+      displayEffectOptions: { duration: 0.5 },
       hideEffect: 'fade', // Possible values: fade, none;
-      hideEffectOptions: { duration: 0.8 }
+      hideEffectOptions: { duration: 0.5 }
     };
     Object.extend(this.options, options || { });
     
