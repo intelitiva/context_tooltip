@@ -16,12 +16,15 @@ var ContextTooltip = Class.create({
     this.keepHiddenTimeout = false;
     this.isContextBeingGrabbed = false;
 
+    this.currentMouseX = 0;
+    this.currentMouseY = 0;
+
     this.options = {
       onWindowLoad: true,
       delayWhenDisplaying: true,
       delayWhenHiding: true,
-      displayDelay: 2,
-      hideDelay: 2,
+      displayDelay: 0.2,
+      hideDelay: 0.2,
       contextClick: 'hide', // Possible values: hide, keep; Hides or keeps the tooltip when the context is clicked.
       click: 'hide', // Possible values: hide, keep; Hides or keeps the tooltip on click.
       hover: 'keep', // Possible values: hide, keep; Hides or keeps the tooltip on hover.
@@ -50,10 +53,10 @@ var ContextTooltip = Class.create({
   createBoundedMethods: function() {
     this.createBoundedMethod('display');
     this.createBoundedMethod('hide');
-    this.createBoundedMethod('keepVisible');
     this.createBoundedMethod('contextGrabbedEvent');
     this.createBoundedMethod('contextReleasedEvent');
     this.createBoundedMethod('registerMouseEvents');
+    this.createBoundedMethod('updateCurrentMousePosition');
     this.createBoundedMethod('log');
     this.createBoundedMethod('hideByClick');
   },
@@ -79,9 +82,16 @@ var ContextTooltip = Class.create({
   
   registerMouseEvents: function() {
     this.log("Registering mouse events.");
+    this.registerExtraMouseEvents();
     this.registerTooltipMouseEvents();
     this.registerContextMouseEvents();
     this.log("Mouse events registered.");
+  },
+
+  registerExtraMouseEvents: function() {
+    // We need the current mouse position, so we observe each mouse move event
+    // on the document and update the mouse position accordingly.
+    document.observe('mousemove', this.updateCurrentMousePositionBounded);
   },
 
   registerTooltipMouseEvents: function() {
@@ -115,19 +125,19 @@ var ContextTooltip = Class.create({
   
   display: function(event) {
     if (this.options.delayWhenDisplaying) {
-      this.displayDelayed(event);
+      this.displayDelayed();
     }
     else {
-      this.displayNow(event);
+      this.displayNow();
     }
   },
 
-  displayDelayed: function(event) {
-    this.callDelayed(this.options.displayDelay, "displayNow", event);
+  displayDelayed: function() {
+    this.callDelayed(this.options.displayDelay, "displayNow");
   },
 
-  displayNow: function(event) {
-    if (this.shouldDisplay(event)) {
+  displayNow: function() {
+    if (this.shouldDisplay()) {
       this.log("Displaying tooltip.");
       
       var displayEffect = this.displayEffect();
@@ -149,8 +159,8 @@ var ContextTooltip = Class.create({
     }
   },
 
-  shouldDisplay: function(event) {
-    return (!this.tooltipElement.visible() && !this.isContextBeingGrabbed && this.mouseInContextOrTooltip(event));
+  shouldDisplay: function() {
+    return (!this.tooltipElement.visible() && !this.isContextBeingGrabbed && this.mouseInContextOrTooltip());
   },
   
   hide: function(event) {
@@ -158,40 +168,36 @@ var ContextTooltip = Class.create({
       this.hideDelayed(event);
     }
     else {
-      this.hideNow(event);
+      this.hideNow();
     }
   },
 
   hideDelayed: function(event) {
-    this.keepVisibleTimeout = this.callDelayed(this.options.hideDelay, "hideNow", event);
-    if (this.options.hover == 'keep') {
-      this.tooltipElement.observe('mouseover', this.keepVisibleBounded);
-    }
-
-    if (this.isContainedByEvent(this.contextElement, event)) {
-      this.contextElement.observe('mouseover', this.keepVisibleBounded);
-    }
-    else if (this.options.hover != 'keep') {
-      this.contextElement.stopObserving('mouseover', this.keepVisibleBounded);
-    }
+    this.callDelayed(this.options.hideDelay, "hideNow", event);
   },
   
-  hideNow: function(event) {
-    if (this.shouldHide(event)) {
+  hideNow: function() {
+    if (this.shouldHide()) {
       this.log("Hiding tooltip.");
 
-      var hideEffect = this.hideEffect();
-      if (hideEffect == null) {
-        this.tooltipElement.hide();
-      }
-      else {
-        new hideEffect(this.tooltipElement, this.options.hideEffectOptions);
-      }
-      
-      if (this.options.hover == 'keep') {
-        this.tooltipElement.stopObserving('mouseover', this.keepVisibleBounded);
-      }
-      this.contextElement.stopObserving('mouseover', this.keepVisibleBounded);
+      this.hideWithoutCheck();
+    }
+  },
+
+  hideWithoutCheck: function() {
+    var hideEffect = this.hideEffect();
+    if (hideEffect == null) {
+      this.tooltipElement.hide();
+    }
+    else {
+      new hideEffect(this.tooltipElement, this.options.hideEffectOptions);
+    }
+  },
+
+  hideByClick: function(event) {
+    if (this.shouldHideByClick(event)) {
+      this.log("Hiding tooltip by click event.");
+      this.hideWithoutCheck();
     }
   },
 
@@ -204,20 +210,28 @@ var ContextTooltip = Class.create({
     }
   },
 
-  shouldHide: function(event) {
-    return (this.tooltipElement.visible() && !this.mouseInContextOrTooltip(event));
+  shouldHide: function() {
+    return (this.tooltipElement.visible() && !this.mouseInContextOrTooltip());
+  },
+
+  shouldHideByClick: function(event) {
+    return this.shouldHideByTooltipClick(event) || this.shouldHideByContextClick(event);
+  },
+
+  shouldHideByTooltipClick: function(event) {
+    return this.options.click == 'hide' && this.tooltipClicked(event)
+  },
+
+  shouldHideByContextClick: function(event) {
+    return this.options.contextClick == 'hide' && this.contextClicked(event)
   },
   
-  hideByClick: function(event) {
-    if ((this.options.contextClick == 'hide' && this.isContainedByEvent(this.contextElement, event)) ||
-        (this.options.click == 'hide' && (event.element().descendantOf(this.tooltipElement)) || event.element() == this.tooltipElement)) {
-      this.log("Hiding tooltip by click event.");
-      this.tooltipElement.hide();
-    }
+  isContained: function(object, x, y) {
+    return Position.within(object, x, y);
   },
   
   isContainedByEvent: function(object, event) {
-    return Position.within(object, event.pointerX(), event.pointerY());
+    return this.isContained(object, event.pointerX(), event.pointerY());
   },
   
   contextGrabbedEvent: function(event) {
@@ -233,31 +247,32 @@ var ContextTooltip = Class.create({
       this.isContextBeingGrabbed = false;
     }
   },
-  
-  keepVisible: function(event) {
-    if (!this.isContextBeingGrabbed && this.keepVisibleTimeout) {
-      this.log("Keeping tooltip visible.");
-      window.clearTimeout(this.keepVisibleTimeout)
-      this.keepVisibleTimeout = false;
-    }
+
+  contextClicked: function(event) {
+    // Just check if the click happened over the context element.
+    return this.isContainedByEvent(this.contextElement, event);
   },
 
-  mouseInContextOrTooltip: function(event) {
-    // TODO: Get current mouse position using document.observe("mousemove")
+  tooltipClicked: function(event) {
+    // Either the tooltip element was clicked or one of his descendants.
+    return event.element() == this.tooltipElement || event.element().descendantOf(this.tooltipElement);
+  },
 
-    // This code gets the mouse when the event was fired, so it does not works well.
-    if (this.isContainedByEvent(this.contextElement, event)) {
-      this.log("Mouse over context element.");
-      return true;
-    }
-    else if (this.isContainedByEvent(this.tooltipElement, event)) {
-      this.log("Mouse over tooltip element.");
-      return true;
-    }
-    else {
-      this.log("Mouse is not over context nor tooltip element.");
-      return false;
-    }
+  mouseInContextOrTooltip: function() {
+    return this.mouseInContext() || this.mouseInTooltip();
+  },
+
+  mouseInContext: function() {
+    return this.isContained(this.contextElement, this.currentMouseX, this.currentMouseY);
+  },
+
+  mouseInTooltip: function() {
+    return this.isContained(this.tooltipElement, this.currentMouseX, this.currentMouseY);
+  },
+
+  updateCurrentMousePosition: function(event) {
+    this.currentMouseX = event.pointerX();
+    this.currentMouseY = event.pointerY();
   },
 
   callDelayed: function(delay, methodName, event) {
