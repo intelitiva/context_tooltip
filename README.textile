@@ -16,4 +16,4 @@ You can call this helper method in any of your templates:
 
 h2. Credits
 
-Vicente Mundim (vicente.mundim@gmail.com)
+Vicente Mundim (vicente.mundim@intelitiva.com)
