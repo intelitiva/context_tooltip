@@ -13,8 +13,10 @@ def copy_javascript(file_name)
   copy file_name, plugin_javascripts, app_javascripts 
 end
 
-begin 
-  copy_javascript 'context_tooltip.js'
+begin
+  Dir.glob(File.join(File.dirname(__FILE__), 'javascripts', '**', '*.js')) do |file|
+    copy_javascript file
+  end
 rescue Exception => e
   puts "There are problems copying assets to you app: #{e.message}"
 end
