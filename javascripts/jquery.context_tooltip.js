@@ -166,15 +166,19 @@ ContextTooltip.prototype = {
 
   display: function(event) {
     if (this.options.delayWhenDisplaying) {
-      this.displayDelayed();
+      this.displayDelayed(null);
     }
     else {
-      this.displayNow();
+      // We always need to delay the show/hide event a little bit, because the
+      // mouseover event is fired when the user passes its mouse over the first
+      // pixel of the element. Unfortunately, browsers do not return the
+      // position of elements with accuracy, so we delay the call for 50ms.
+      this.displayDelayed(0.05);
     }
   },
 
-  displayDelayed: function() {
-    this.callDelayed(this.options.displayDelay, "displayNow");
+  displayDelayed: function(delay) {
+    this.callDelayed(delay || this.options.displayDelay, "displayNow");
   },
 
   displayNow: function() {
@@ -210,15 +214,19 @@ ContextTooltip.prototype = {
 
   hide: function(event) {
     if (this.options.delayWhenHiding) {
-      this.hideDelayed(event);
+      this.hideDelayed(event, null);
     }
     else {
-      this.hideNow();
+      // We always need to delay the show/hide event a little bit, because the
+      // mouseover event is fired when the user passes its mouse over the first
+      // pixel of the element. Unfortunately, browsers do not return the
+      // position of elements with accuracy, so we delay the call for 50ms.
+      this.hideDelayed(event, 0.05);
     }
   },
 
-  hideDelayed: function(event) {
-    this.callDelayed(this.options.hideDelay, "hideNow", event);
+  hideDelayed: function(event, delay) {
+    this.callDelayed(delay || this.options.hideDelay, "hideNow", event);
   },
 
   hideNow: function() {
@@ -266,8 +274,7 @@ ContextTooltip.prototype = {
     var objectY = offset.top;
     var objectWidth = object.width();
     var objectHeight = object.height();
-    //alert("X:" + objectX + ", Y:" + objectY + ", width:" + objectWidth + ", height:" + objectWidth);
-    return (x > objectX && x < (objectX + objectWidth) && y > objectY && y < (objectY + objectHeight));
+    return (x >= objectX && x < (objectX + objectWidth) && y >= objectY && y < (objectY + objectHeight));
   },
 
   isContainedByEvent: function(object, event) {
