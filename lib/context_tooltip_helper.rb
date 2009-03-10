@@ -24,6 +24,8 @@ module ContextTooltipHelper
       converted_options = options.map do |k, v|
         if v.kind_of?(Hash) then
           "#{k}:#{options_for_javascript(v)}"
+        elsif v.kind_of?(String) then
+          "#{k}:'#{v}'"
         else
           "#{k}:#{v}"
         end

@@ -16,7 +16,6 @@ function closeContextTooltip(tooltip_element_id) {
 var ContextTooltip = Class.create({
   initialize: function(tooltipElement, options) {
     this.tooltipElement = $(tooltipElement);
-    this.contextElement = this.tooltipElement.up();
     
     // Hiding the tooltip element.
     this.tooltipElement.hide();
@@ -40,9 +39,12 @@ var ContextTooltip = Class.create({
       displayEffect: 'appear', // Possible values: appear, none;
       displayEffectOptions: { duration: 0.5 },
       hideEffect: 'fade', // Possible values: fade, none;
-      hideEffectOptions: { duration: 0.5 }
+      hideEffectOptions: { duration: 0.5 },
+      contextElement: null
     };
     Object.extend(this.options, options || { });
+
+    this.contextElement = this.options.contextElement ? $(this.options.contextElement) : this.tooltipElement.up();
     
     // If an element with this id is set, we will update it every time a log
     // is added.
