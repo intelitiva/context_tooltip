@@ -15,7 +15,7 @@ end
 
 begin
   Dir.glob(File.join(File.dirname(__FILE__), 'javascripts', '**', '*.js')) do |file|
-    copy_javascript file
+    copy_javascript File.basename(file)
   end
 rescue Exception => e
   puts "There are problems copying assets to you app: #{e.message}"
