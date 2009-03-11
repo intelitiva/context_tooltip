@@ -13,6 +13,14 @@ ContextTooltip lets you choose how to layout your tooltip and where it should be
 displayed. In fact, the tooltip element may be any element in the document, and
 so the context too.
 
+h2. Installing
+
+For now it can only be installed as a plugin:
+
+<pre>
+  ./script/plugin install git://github.com/intelitiva/context_tooltip.git
+</pre>
+
 h2. Usage
 
 You can call this helper method in any of your templates:
