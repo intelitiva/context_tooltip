@@ -3,7 +3,6 @@
 require 'spec'
 require 'rubygems'
 require 'action_view'
-#require 'action_view/helpers/javascript_helper'
 
 Spec::Runner.configure do |config|
 end
