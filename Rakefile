@@ -1,5 +1,9 @@
 require 'rake/testtask'
 require 'rake/rdoctask'
+#require 'tasks/rspec'
+RAILS_ROOT = File.dirname(__FILE__)
+load File.join(File.dirname(__FILE__), 'lib/tasks/rspec.rake')
+#require '/home/INTELITIVA/vicente.mundim/Projects/context_tooltip/lib/tasks/rspec.rake'
 
 desc 'Default: run unit tests.'
 task :default => :test
