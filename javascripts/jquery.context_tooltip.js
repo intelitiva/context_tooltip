@@ -48,7 +48,9 @@ function ContextTooltip(tooltipElement, options) {
     hideEffect: 'fade', // Possible values: fade, none;
     hideEffectOptions: { duration: 0.5 },
     contextElement: null,
-    position: 'none'
+    position: 'none',
+    horizontalOffset: 0,
+    verticalOffset: 0
   }
   this.options = $.extend(this.defaults, options);
 
@@ -246,8 +248,8 @@ ContextTooltip.prototype = {
 
     this.tooltipElement.css({
       'position': 'absolute',
-      'top': top,
-      'left': left
+      'top': top + this.options.verticalOffset,
+      'left': left + this.options.horizontalOffset
     });
   },
 

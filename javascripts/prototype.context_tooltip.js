@@ -41,7 +41,9 @@ var ContextTooltip = Class.create({
       hideEffect: 'fade', // Possible values: fade, none;
       hideEffectOptions: { duration: 0.5 },
       contextElement: null,
-      position: 'none'
+      position: 'none',
+      horizontalOffset: 0,
+      verticalOffset: 0
     };
     Object.extend(this.options, options || { });
 
@@ -234,8 +236,8 @@ var ContextTooltip = Class.create({
 
     this.tooltipElement.setStyle({
       'position': 'absolute',
-      'top': top + 'px',
-      'left': left + 'px'
+      'top': top + this.options.verticalOffset + 'px',
+      'left': left + this.options.horizontalOffset + 'px'
     });
   },
 
