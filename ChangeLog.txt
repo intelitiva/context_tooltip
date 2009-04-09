@@ -1,5 +1,6 @@
 0.3.0
 - Added positioning option to enable automatically positioning of tooltips
+- Fixed a bug which prevented the tooltip from being hidden after hovering it
 
 0.2.0
 - Renamed options_for_javascript to prevent conflict with the rails helper method

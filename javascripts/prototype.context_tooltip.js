@@ -113,6 +113,9 @@ var ContextTooltip = Class.create({
       $$('.tooltip .close').invoke('observe', 'click', this.hideByClickBounded);
     }
     else {
+      // Hovering out from the tooltip element should hide it if necessary.
+      this.tooltipElement.observe('mouseout', this.hideBounded);
+
       if (this.options.click == 'hide') {
         this.log("Clicking on the tooltip will hide it.");
         this.tooltipElement.observe('mousedown', this.hideByClickBounded);
