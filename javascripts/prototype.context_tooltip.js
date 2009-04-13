@@ -2,7 +2,19 @@
 // HTML ID.
 var context_tooltips = $H();
 
+function createTooltipElement(tooltip_element_id) {
+  tooltip_element_id = tooltip_element_id.replace(/[.#\[\]=]/g, '').replace(/ /g, '_')
+  $$("body").each(function(element) {
+    element.insert("<div id='" + tooltip_element_id + "' style='display:none;'></div>")
+  });
+  return "#" + tooltip_element_id;
+}
+
 function addContextTooltip(tooltip_elements, options) {
+  if ($$(tooltip_elements).length == 0) {
+    tooltip_elements = createTooltipElement(tooltip_elements);
+  }
+
   $$(tooltip_elements).each(function(element) {
     context_tooltips.set(element.id, new ContextTooltip(element, options));
   })
@@ -17,9 +29,6 @@ var ContextTooltip = Class.create({
   initialize: function(tooltipElement, options) {
     this.tooltipElement = $(tooltipElement);
     
-    // Hiding the tooltip element.
-    this.tooltipElement.hide();
-
     // Initializing some utility flags.
     this.isContextBeingGrabbed = false;
 
@@ -43,7 +52,8 @@ var ContextTooltip = Class.create({
       contextElement: null, // The context element to be used instead of the direct parent.
       position: 'none', // Enter values like: top-left, bottom-right, or just top, right, bottom, left.
       horizontalOffset: 0, // A horizontal offset used for positioned tooltips.
-      verticalOffset: 0 // A vertical offset used for positioned tooltips.
+      verticalOffset: 0, // A vertical offset used for positioned tooltips.
+      remoteUrlOptions: false // Ajax options to be used when loading tooltip contents.
     };
     Object.extend(this.options, options || { });
 
@@ -54,6 +64,7 @@ var ContextTooltip = Class.create({
     this._logger = $('javascript-log');
 
     this.createBoundedMethods();
+    this.tooltipElement.hide();
     this.registerMouseEventsDelayedIfNecessary();
   },
   
@@ -180,6 +191,10 @@ var ContextTooltip = Class.create({
   },
 
   displayWithoutCheck: function() {
+    if (this.options.remoteUrlOptions) {
+      this.tooltipElement.update('') // emptying the tooltip element.
+    }
+    
     if (this.options.position != 'none') {
       this.make_positioned();
     }
@@ -191,6 +206,10 @@ var ContextTooltip = Class.create({
     else {
       new displayEffect(this.tooltipElement, this.options.displayEffectOptions);
     }
+
+    if (this.options.remoteUrlOptions) {
+      this.loadTooltipContents();
+    }
   },
 
   displayEffect: function() {
@@ -200,6 +219,19 @@ var ContextTooltip = Class.create({
     else {
       return null;
     }
+  },
+
+  loadTooltipContents: function() {
+    var self = this;
+    var defaultUrlOptions = {
+      method: 'get',
+      onSuccess: function(transport){
+        self.tooltipElement.update(transport.responseText);
+      }
+    }
+
+    var remoteUrlOptions = Object.extend(defaultUrlOptions, this.options.remoteUrlOptions);
+    new Ajax.Request(this.options.remoteUrlOptions.url, remoteUrlOptions);
   },
 
   make_positioned: function() {

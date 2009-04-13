@@ -2,6 +2,7 @@
 - Added positioning option to enable automatically positioning of tooltips
 - Fixed a bug which prevented the tooltip from being hidden after hovering it
 - Added vertical and horizontal offeset options to allow better positioning of tooltips
+- Added support for loading tooltip contents in ajax call.
 
 0.2.0
 - Renamed options_for_javascript to prevent conflict with the rails helper method
