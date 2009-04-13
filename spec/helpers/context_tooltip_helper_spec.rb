@@ -1,6 +1,9 @@
 require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 require File.expand_path(File.dirname(__FILE__) + '/../../lib/context_tooltip_helper')
 
+require 'action_controller/mime_type'
+require 'action_controller/mime_types'
+
 describe ContextTooltipHelper do
   include ActionView::Helpers::TagHelper
   include ActionView::Helpers::JavaScriptHelper

@@ -1,5 +1,6 @@
 require 'rake/testtask'
 require 'rake/rdoctask'
+require 'rubygems'
 require 'spec/rake/spectask'
 
 desc 'Default: run specs.'
