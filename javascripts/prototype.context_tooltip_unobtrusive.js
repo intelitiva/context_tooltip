@@ -40,10 +40,10 @@ var ContextTooltip = Class.create({
       displayEffectOptions: { duration: 0.5 },
       hideEffect: 'fade', // Possible values: fade, none;
       hideEffectOptions: { duration: 0.5 },
-      contextElement: null,
-      position: 'none',
-      horizontalOffset: 0,
-      verticalOffset: 0
+      contextElement: null, // The context element to be used instead of the direct parent.
+      position: 'none', // Enter values like: top-left, bottom-right, or just top, right, bottom, left.
+      horizontalOffset: 0, // A horizontal offset used for positioned tooltips.
+      verticalOffset: 0 // A vertical offset used for positioned tooltips.
     };
     Object.extend(this.options, options || { });
 
