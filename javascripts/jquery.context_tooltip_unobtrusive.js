@@ -47,7 +47,10 @@ function ContextTooltip(tooltipElement, options) {
     displayEffectOptions: { duration: 0.5 },
     hideEffect: 'fade', // Possible values: fade, none;
     hideEffectOptions: { duration: 0.5 },
-    contextElement: null
+    contextElement: null,
+    position: 'none',
+    horizontalOffset: 0,
+    verticalOffset: 0
   }
   this.options = $.extend(this.defaults, options);
 
@@ -127,6 +130,9 @@ ContextTooltip.prototype = {
       });
     }
     else {
+      // Hovering out from the tooltip element should hide it if necessary.
+      this.tooltipElement.mouseout(this.hideBounded);
+
       if (this.options.click == 'hide') {
         this.log("Clicking on the tooltip will hide it.");
         this.tooltipElement.mousedown(this.hideByClickBounded);
@@ -196,12 +202,59 @@ ContextTooltip.prototype = {
   },
 
   displayWithoutCheck: function() {
+    if (this.options.position != 'none') {
+      this.make_positioned();
+    }
+    
     if (this.options.displayEffect == 'appear') {
       this.tooltipElement.fadeIn(this.options.displayEffectOptions.duration * 1000);
     }
     else {
       this.tooltipElement.show();
     }
+  },
+
+  make_positioned: function() {
+    var contextElementOffset = this.contextElement.offset();
+    var contextElementWidth = this.contextElement.outerWidth();
+    var contextElementHeight = this.contextElement.outerHeight();
+    var tooltipElementWidth = this.tooltipElement.outerWidth();
+    var tooltipElementHeight = this.tooltipElement.outerHeight();
+
+    var top = contextElementOffset.top;
+    var left = contextElementOffset.left;
+
+    var parsed_position = this.parse_position();
+    for (var index = 0; index < parsed_position.length; index++) {
+      var position = parsed_position[index];
+      switch (position) {
+        case 'right':
+          left = (contextElementOffset.left + contextElementWidth);
+          break;
+        case 'left':
+          left = (contextElementOffset.left - tooltipElementWidth);
+          break;
+        case 'top':
+          top = (contextElementOffset.top - tooltipElementHeight);
+          break;
+        case 'bottom':
+          top = (contextElementOffset.top + contextElementHeight);
+          break;
+        default:
+          // do nothing, tooltip will be positioned by CSS.
+          break;
+      }
+    }
+
+    this.tooltipElement.css({
+      'position': 'absolute',
+      'top': top + this.options.verticalOffset,
+      'left': left + this.options.horizontalOffset
+    });
+  },
+
+  parse_position: function() {
+    return this.options.position.split('-');
   },
 
   shouldDisplay: function() {
