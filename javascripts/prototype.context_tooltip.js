@@ -53,9 +53,12 @@ var ContextTooltip = Class.create({
       position: 'none', // Enter values like: top-left, bottom-right, or just top, right, bottom, left.
       horizontalOffset: 0, // A horizontal offset used for positioned tooltips.
       verticalOffset: 0, // A vertical offset used for positioned tooltips.
-      remoteUrlOptions: false // Ajax options to be used when loading tooltip contents.
+      remoteUrlOptions: false, // Ajax options to be used when loading tooltip contents.
+      additionalClasses: '' // Additional classes to be added to the tooltip element.
     };
     Object.extend(this.options, options || { });
+
+    this.tooltipElement.addClassName(this.options.additionalClasses);
 
     this.contextElement = this.options.contextElement ? $(this.options.contextElement) : this.tooltipElement.up();
     
