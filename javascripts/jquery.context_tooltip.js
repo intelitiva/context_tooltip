@@ -64,7 +64,7 @@ function ContextTooltip(tooltipElement, options) {
   }
   this.options = $.extend(this.defaults, options);
 
-  this.tooltipElement.toggleClass(this.options.additionalClasses, true);
+  this.tooltipElement.addClass(this.options.additionalClasses);
 
   this.contextElement = this.options.contextElement ? $("#" + this.options.contextElement) : this.tooltipElement.parent();
 
