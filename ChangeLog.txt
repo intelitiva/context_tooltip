@@ -3,6 +3,8 @@
 - Fixed a bug which prevented the tooltip from being hidden after hovering it
 - Added vertical and horizontal offeset options to allow better positioning of tooltips
 - Added support for loading tooltip contents in ajax call.
+- Added support for setting additional classes for tooltips.
+- Fixed a bug which prevented the tooltip from being displayed if context was inside a secondary scrollable box in prototype version.
 
 0.2.0
 - Renamed options_for_javascript to prevent conflict with the rails helper method

@@ -61,6 +61,8 @@ var ContextTooltip = Class.create({
     this.tooltipElement.addClassName(this.options.additionalClasses);
 
     this.contextElement = this.options.contextElement ? $(this.options.contextElement) : this.tooltipElement.up();
+
+    this.clearScrollOffset();
     
     // If an element with this id is set, we will update it every time a log
     // is added.
@@ -244,6 +246,9 @@ var ContextTooltip = Class.create({
     var tooltipElementWidth = this.tooltipElement.getWidth();
     var tooltipElementHeight = this.tooltipElement.getHeight();
 
+    contextElementOffset.left += this.scrollOffsetX;
+    contextElementOffset.top += this.scrollOffsetY;
+
     var top = contextElementOffset.top;
     var left = contextElementOffset.left;
 
@@ -351,9 +356,42 @@ var ContextTooltip = Class.create({
   },
   
   isContained: function(object, x, y) {
-    return Position.within(object, x, y);
+    this.calculateScrollOffset(object);
+
+    var offset = object.cumulativeOffset();
+    var objectX = offset.left + this.scrollOffsetX;
+    var objectY = offset.top + this.scrollOffsetY;
+    var dimensions = object.getDimensions();
+    var objectWidth = dimensions.width;
+    var objectHeight = dimensions.height;
+
+    return this.checkContainment(x, y, objectX, objectY, objectWidth, objectHeight);
+  },
+
+  checkContainment: function(x, y, objectX, objectY, objectWidth, objectHeight) {
+    return (x >= objectX && x < (objectX + objectWidth) && y >= objectY && y < (objectY + objectHeight));
   },
   
+  calculateScrollOffset: function(object) {
+    var deltaX =  window.pageXOffset
+                || document.documentElement.scrollLeft
+                || document.body.scrollLeft
+                || 0;
+    var deltaY =  window.pageYOffset
+                || document.documentElement.scrollTop
+                || document.body.scrollTop
+                || 0;
+
+    var scrollOffset = object.cumulativeScrollOffset();
+    this.scrollOffsetX = deltaX - scrollOffset.left;
+    this.scrollOffsetY = deltaY - scrollOffset.top;
+  },
+
+  clearScrollOffset: function() {
+    this.scrollOffsetX = 0;
+    this.scrollOffsetY = 0;
+  },
+
   isContainedByEvent: function(object, event) {
     return this.isContained(object, event.pointerX(), event.pointerY());
   },
