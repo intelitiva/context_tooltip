@@ -232,16 +232,10 @@ var ContextTooltip = Class.create({
       this.make_positioned();
     }
 
-    var displayEffect = this.displayEffect();
-    if (displayEffect == null) {
-      this.tooltipElement.show();
-    }
-    else {
-      new displayEffect(this.tooltipElement, this.options.displayEffectOptions);
-    }
-
     if (this.options.remoteUrlOptions) {
       this.loadTooltipContents();
+    } else {
+      this.displayWithEffect();
     }
   },
 
@@ -254,12 +248,26 @@ var ContextTooltip = Class.create({
     }
   },
 
+  displayWithEffect: function() {
+    var displayEffect = this.displayEffect();
+    if (displayEffect == null) {
+      this.tooltipElement.show();
+    }
+    else {
+      new displayEffect(this.tooltipElement, this.options.displayEffectOptions);
+    }
+  },
+
   loadTooltipContents: function() {
     var self = this;
     var defaultUrlOptions = {
       method: 'get',
       onSuccess: function(transport){
         self.tooltipElement.update(transport.responseText);
+        if (self.options.position != 'none') {
+          self.make_positioned();
+        }
+        self.displayWithEffect();
       }
     }
 
