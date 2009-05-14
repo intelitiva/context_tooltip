@@ -253,16 +253,20 @@ ContextTooltip.prototype = {
     if (this.options.position != 'none') {
       this.make_positioned();
     }
-    
+
+    if (this.options.remoteUrlOptions) {
+      this.loadTooltipContents();
+    } else {
+      this.displayWithEffect();
+    }
+  },
+
+  displayWithEffect: function() {
     if (this.options.displayEffect == 'appear') {
       this.tooltipElement.fadeIn(this.options.displayEffectOptions.duration * 1000);
     }
     else {
       this.tooltipElement.show();
-    }
-
-    if (this.options.remoteUrlOptions) {
-      this.loadTooltipContents();
     }
   },
 
@@ -272,7 +276,11 @@ ContextTooltip.prototype = {
       dataType: 'html',
       type: 'get',
       success: function(html){
-        self.tooltipElement.append(html);
+        self.tooltipElement.html(html);
+        if (self.options.position != 'none') {
+          self.make_positioned();
+        }
+        self.displayWithEffect();
       }
     }
 
