@@ -65,7 +65,7 @@ var ContextTooltip = Class.create({
 
   log: function(msg) {
     if (this._logger != null) {
-      tooltipElementId = (this.tooltipElement == null) ? this.rawTooltipElementId : this.tooltipElement.id;
+      tooltipElementId = this.hasTooltipElement() ? this.tooltipElement.id : this.rawTooltipElementId;
       this._logger.insert("<p>" + Date() + " " + msg + " [" + tooltipElementId + "/" + this.contextElement.id + "]" + "</p>");
       this._logger.scrollTop = this._logger.scrollHeight;
     }
@@ -93,14 +93,18 @@ var ContextTooltip = Class.create({
   initializeTooltipDelayedIfNecessary: function() {
     if (this.options.onWindowLoad) {
       if (this.hasTooltipElement()) {
+        this.log('It has a tooltip element, it will be initialized when the page is loaded.');
         Event.observe(window, 'load', this.initializeTooltipWhenWindowIsLoadedBounded);
       } else {
+        this.log("It doesn't have a tooltip element, one will be created and initialized when the page is loaded.");
         Event.observe(window, 'load', this.createAndInitializeTooltipWhenWindowIsLoadedBounded);
       }
     } else {
       if (this.hasTooltipElement()) {
+        this.log('It has a tooltip element, it will be initialized now.').;
         this.initializeTooltip();
       } else {
+        this.log("It doesn't have a tooltip element, one will be created and initialized now.");
         this.createAndInitializeTooltip();
       }
     }

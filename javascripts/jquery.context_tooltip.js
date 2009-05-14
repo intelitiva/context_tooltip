@@ -1,17 +1,11 @@
 var context_tooltips = new Array();
 
-function createTooltipElement(tooltip_element_id) {
-  tooltip_element_id = tooltip_element_id.replace(/[.#\[\]=]/g, '').replace(/ /g, '_')
-  $("body").append("<div id='" + tooltip_element_id + "' style='display:none;'></div>")
-  return "#" + tooltip_element_id;
-}
-
 function addContextTooltip(tooltip_elements, options) {
   if ($(tooltip_elements).length == 0) {
-    tooltip_elements = createTooltipElement(tooltip_elements);
+    context_tooltips.push(new ContextTooltip(tooltip_elements, options));
+  } else {
+    $(tooltip_elements).context_tooltip(options);
   }
-
-  $(tooltip_elements).context_tooltip(options);
 }
 
 function findContextTooltip(tooltip_element_id) {
@@ -32,6 +26,7 @@ function closeContextTooltip(tooltip_element_id) {
 
 function ContextTooltip(tooltipElement, options) {
   this.rawTooltipElement = tooltipElement;
+  this.rawTooltipElementId = this.toId(tooltipElement);
   this.tooltipElement = $(tooltipElement);
   
   // Initializing some utility flags.
@@ -73,14 +68,14 @@ function ContextTooltip(tooltipElement, options) {
   this._logger = $('#javascript-log');
 
   this.createBoundedMethods();
-  this.tooltipElement.hide();
-  this.registerMouseEventsDelayedIfNecessary();
+  this.initializeTooltipDelayedIfNecessary();
 }
 
 ContextTooltip.prototype = {
   log: function(msg) {
     if (this._logger != null) {
-      this._logger.append("<p>" + Date() + " " + msg + " [" + this.tooltipElement.attr('id') + "/" + this.contextElement.attr('id') + "]" + "</p>");
+      tooltipElementId = this.hasTooltipElement() ? this.tooltipElement.attr('id') : this.rawTooltipElementId;
+      this._logger.append("<p>" + Date() + " " + msg + " [" + tooltipElementId + "/" + this.contextElement.attr('id') + "]" + "</p>");
       this._logger.attr('scrollTop', this._logger.attr('scrollHeight'));
     }
   },
@@ -94,8 +89,9 @@ ContextTooltip.prototype = {
     this.createBoundedMethod('contextReleasedEvent');
     this.createBoundedMethod('registerMouseEvents');
     this.createBoundedMethod('updateCurrentMousePosition');
+    this.createBoundedMethod('createAndInitializeTooltipWhenWindowIsLoaded');
+    this.createBoundedMethod('initializeTooltipWhenWindowIsLoaded');
     this.createBoundedMethod('log');
-    this.createBoundedMethod('displayByClick');
     this.createBoundedMethod('hideByClick');
   },
 
@@ -106,19 +102,54 @@ ContextTooltip.prototype = {
     }
   },
 
-  registerMouseEventsDelayedIfNecessary: function() {
-    // Checking if we need to wait for the whole window document to be loaded
-    // before registering the events.
+  initializeTooltipDelayedIfNecessary: function() {
     if (this.options.onWindowLoad) {
-      this.log("Registering events on window load.");
-      $(document).ready(this.registerMouseEventsBounded);
+      if (this.hasTooltipElement()) {
+        this.log('It has a tooltip element, it will be initialized when the page is loaded.');
+        $(document).ready(this.initializeTooltipWhenWindowIsLoadedBounded);
+      } else {
+        this.log("It doesn't have a tooltip element, one will be created and initialized when the page is loaded.");
+        $(document).ready(this.createAndInitializeTooltipWhenWindowIsLoadedBounded);
+      }
+    } else {
+      if (this.hasTooltipElement()) {
+        this.log('It has a tooltip element, it will be initialized now.');
+        this.initializeTooltip();
+      } else {
+        this.log("It doesn't have a tooltip element, one will be created and initialized now.");
+        this.createAndInitializeTooltip();
+      }
     }
-    else {
-      // Registering the events right away (useful when adding tooltips after
-      // the page is loaded, i.e., ajax calls).
-      this.log("Registering events right now.");
-      this.registerMouseEvents();
-    }
+  },
+
+  createAndInitializeTooltipWhenWindowIsLoaded: function() {
+    this.createTooltip();
+    this.initializeTooltip();
+  },
+
+  initializeTooltipWhenWindowIsLoaded: function() {
+    this.initializeTooltip();
+  },
+
+  initializeTooltip: function() {
+    this.log("Initializing tooltip");
+    this.tooltipElement.addClass(this.options.additionalClasses);
+    this.tooltipElement.hide();
+    this.registerMouseEvents();
+    this.log("Tooltip initialized");
+  },
+
+  createTooltip: function() {
+    this.log("Creating tooltip");
+    var tooltip = document.createElement('div');
+    tooltip.id = this.rawTooltipElementId;
+    this.tooltipElement = $(tooltip);
+    $("body").append(this.tooltipElement)
+    this.log("Tooltip created");
+  },
+
+  hasTooltipElement: function() {
+    return !(this.tooltipElement == null || this.tooltipElement.size() == 0 || this.tooltipElement.id == "");
   },
 
   registerMouseEvents: function() {
@@ -415,6 +446,13 @@ ContextTooltip.prototype = {
     return window.setTimeout(function() {
       self[methodName].apply(self, [event || window.event]);
     }, delay * 1000);
+  },
+
+  toId: function(value) {
+    if (value && value.split) {
+      return value.replace(/[.#\[\]=]/g, '').replace(/ /g, '_');
+    }
+    return null;
   }
 };
 
