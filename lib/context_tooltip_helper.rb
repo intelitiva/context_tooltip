@@ -14,6 +14,7 @@ module ContextTooltipHelper
   end
 
   def context_tooltip(tooltip_id, options = {})
+    options.reverse_merge!(default_options)
     javascript_tag do
       "addContextTooltip('#{tooltip_id}', #{customized_options_for_javascript(options)});"
     end
@@ -48,5 +49,9 @@ module ContextTooltipHelper
 
     def has_jquery?
       ActionView::Helpers::AssetTagHelper::JAVASCRIPT_DEFAULT_SOURCES.include?('jquery')
+    end
+
+    def default_options
+      return { :onWindowLoad => (not request.xhr?) }
     end
 end

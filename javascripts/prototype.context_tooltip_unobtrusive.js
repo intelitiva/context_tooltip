@@ -80,8 +80,8 @@ var ContextTooltip = Class.create({
     this.createBoundedMethod('contextReleasedEvent');
     this.createBoundedMethod('registerMouseEvents');
     this.createBoundedMethod('updateCurrentMousePosition');
-    this.createBoundedMethod('createAndInitializeTooltipWhenWindowIsLoaded');
-    this.createBoundedMethod('initializeTooltipWhenWindowIsLoaded');
+    this.createBoundedMethod('createAndInitializeTooltip');
+    this.createBoundedMethod('initializeTooltip');
     this.createBoundedMethod('log');
     this.createBoundedMethod('hideByClick');
   },
@@ -94,14 +94,14 @@ var ContextTooltip = Class.create({
     if (this.options.onWindowLoad) {
       if (this.hasTooltipElement()) {
         this.log('It has a tooltip element, it will be initialized when the page is loaded.');
-        Event.observe(window, 'load', this.initializeTooltipWhenWindowIsLoadedBounded);
+        this.initializeTooltipWhenWindowIsLoaded();
       } else {
         this.log("It doesn't have a tooltip element, one will be created and initialized when the page is loaded.");
-        Event.observe(window, 'load', this.createAndInitializeTooltipWhenWindowIsLoadedBounded);
+        this.createAndInitializeTooltipWhenWindowIsLoaded();
       }
     } else {
       if (this.hasTooltipElement()) {
-        this.log('It has a tooltip element, it will be initialized now.').;
+        this.log('It has a tooltip element, it will be initialized now.');
         this.initializeTooltip();
       } else {
         this.log("It doesn't have a tooltip element, one will be created and initialized now.");
@@ -111,11 +111,15 @@ var ContextTooltip = Class.create({
   },
 
   createAndInitializeTooltipWhenWindowIsLoaded: function() {
-    this.createTooltip();
-    this.initializeTooltip();
+    Event.observe(window, 'load', this.createAndInitializeTooltipBounded);
   },
 
   initializeTooltipWhenWindowIsLoaded: function() {
+    Event.observe(window, 'load', this.initializeTooltipBounded);
+  },
+
+  createAndInitializeTooltip: function() {
+    this.createTooltip();
     this.initializeTooltip();
   },
 

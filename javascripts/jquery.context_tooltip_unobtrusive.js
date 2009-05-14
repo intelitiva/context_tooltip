@@ -89,8 +89,8 @@ ContextTooltip.prototype = {
     this.createBoundedMethod('contextReleasedEvent');
     this.createBoundedMethod('registerMouseEvents');
     this.createBoundedMethod('updateCurrentMousePosition');
-    this.createBoundedMethod('createAndInitializeTooltipWhenWindowIsLoaded');
-    this.createBoundedMethod('initializeTooltipWhenWindowIsLoaded');
+    this.createBoundedMethod('createAndInitializeTooltip');
+    this.createBoundedMethod('initializeTooltip');
     this.createBoundedMethod('log');
     this.createBoundedMethod('hideByClick');
   },
@@ -106,10 +106,11 @@ ContextTooltip.prototype = {
     if (this.options.onWindowLoad) {
       if (this.hasTooltipElement()) {
         this.log('It has a tooltip element, it will be initialized when the page is loaded.');
-        $(document).ready(this.initializeTooltipWhenWindowIsLoadedBounded);
+        this.initializeTooltipWhenWindowIsLoaded();
+        
       } else {
         this.log("It doesn't have a tooltip element, one will be created and initialized when the page is loaded.");
-        $(document).ready(this.createAndInitializeTooltipWhenWindowIsLoadedBounded);
+        this.createAndInitializeTooltipWhenWindowIsLoaded();
       }
     } else {
       if (this.hasTooltipElement()) {
@@ -123,11 +124,15 @@ ContextTooltip.prototype = {
   },
 
   createAndInitializeTooltipWhenWindowIsLoaded: function() {
-    this.createTooltip();
-    this.initializeTooltip();
+    $(document).ready(this.createAndInitializeTooltipBounded);
   },
 
   initializeTooltipWhenWindowIsLoaded: function() {
+    $(document).ready(this.initializeTooltipBounded);
+  },
+
+  createAndInitializeTooltip: function() {
+    this.createTooltip();
     this.initializeTooltip();
   },
 
