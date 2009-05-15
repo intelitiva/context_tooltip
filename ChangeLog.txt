@@ -1,3 +1,9 @@
+0.4.0
+- Ajax Tooltip elements are created only when the document is ready now.
+- Ajax Tooltip elements are positioned only after their content is loaded, i.e, ajax call returned successfully.
+- Added onWindowLoad default option for the context_tooltip helper, based on whether the method is called by ajax or not.
+- When elements inside the Tooltip element which has a class 'close' are clicked the tooltip will be hidden, even if the 'click' option is set to 'keep'.
+
 0.3.0
 - Added positioning option to enable automatically positioning of tooltips
 - Fixed a bug which prevented the tooltip from being hidden after hovering it

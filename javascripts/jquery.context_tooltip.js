@@ -68,6 +68,11 @@ function ContextTooltip(tooltipElement, options) {
   this._logger = $('#javascript-log');
 
   this.createBoundedMethods();
+
+  if (this.options.displayWhenClicked) {
+    this.registerClickedContextMouseEvents();
+  }
+
   this.initializeTooltipDelayedIfNecessary();
 }
 
@@ -145,16 +150,26 @@ ContextTooltip.prototype = {
   },
 
   createTooltip: function() {
-    this.log("Creating tooltip");
-    var tooltip = document.createElement('div');
-    tooltip.id = this.rawTooltipElementId;
-    this.tooltipElement = $(tooltip);
-    $("body").append(this.tooltipElement)
-    this.log("Tooltip created");
+    var tooltip_element = $("#" + this.rawTooltipElementId);
+    if (this.elementExists(tooltip_element)) {
+      this.log("Tooltip element already created, just using it.");
+      this.tooltipElement = tooltip_element;
+    } else {
+      this.log("Creating tooltip");
+      var tooltip = document.createElement('div');
+      tooltip.id = this.rawTooltipElementId;
+      this.tooltipElement = $(tooltip);
+      $("body").append(this.tooltipElement)
+      this.log("Tooltip created");
+    }
   },
 
   hasTooltipElement: function() {
-    return !(this.tooltipElement == null || this.tooltipElement.size() == 0 || this.tooltipElement.id == "");
+    return this.elementExists(this.tooltipElement);
+  },
+
+  elementExists: function(element) {
+    return !(element == null || element.size() == 0 || element.id == "");
   },
 
   registerMouseEvents: function() {
@@ -172,13 +187,11 @@ ContextTooltip.prototype = {
   },
 
   registerTooltipMouseEvents: function() {
-    if (this.options.displayWhenClicked) {
-      var self = this;
-      $('.tooltip .close').each(function() {
-        $(this).click(self.hideByClickBounded);
-      });
+    if (!this.options.remoteUrlOptions) {
+      this.registerCloseTooltipEvents();
     }
-    else {
+
+    if (!this.options.displayWhenClicked) {
       // Hovering out from the tooltip element should hide it if necessary.
       this.tooltipElement.mouseout(this.hideBounded);
 
@@ -192,12 +205,24 @@ ContextTooltip.prototype = {
     }
   },
 
-  registerContextMouseEvents: function() {
-    if (this.options.displayWhenClicked) {
-      this.log("Tooltip will be displayed when clicked.");
-      this.contextElement.click(this.displayByClickBounded);
+  registerCloseTooltipEvents: function() {
+    var self = this;
+
+    // Elements with a "close" class inside tooltips will close the tooltip when clicked.
+    if (this.tooltipElement.attr('id')) {
+      $('#' + this.tooltipElement.attr('id') + ' .close').each(function() {
+        $(this).click(self.hideWithoutCheckBounded);
+      });
+    } else {
+      // Case the tooltip doesn't have an id.
+      this.tooltipElement.children('.close').each(function() {
+        $(this).click(self.hideWithoutCheckBounded);
+      });
     }
-    else {
+  },
+
+  registerContextMouseEvents: function() {
+    if (!this.options.displayWhenClicked) {
       this.log("Tooltip will be displayed when hovered.");
       
       // The show/hide events are binded to the mouse over and mouse out,
@@ -217,6 +242,11 @@ ContextTooltip.prototype = {
         this.log("Clicking on the context will keep the tooltip visible.");
       }
     }
+  },
+
+  registerClickedContextMouseEvents: function() {
+    this.log("Tooltip will be displayed when clicked.");
+    this.contextElement.click(this.displayWithoutCheckBounded);
   },
 
   display: function(event) {
@@ -285,6 +315,7 @@ ContextTooltip.prototype = {
         if (self.options.position != 'none') {
           self.make_positioned();
         }
+        self.registerCloseTooltipEvents();
         self.displayWithEffect();
       }
     }

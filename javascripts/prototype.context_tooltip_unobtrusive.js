@@ -60,6 +60,11 @@ var ContextTooltip = Class.create({
     this._logger = $('javascript-log');
 
     this.createBoundedMethods();
+
+    if (this.options.displayWhenClicked) {
+      this.registerClickedContextMouseEvents();
+    }
+
     this.initializeTooltipDelayedIfNecessary();
   },
 
@@ -84,6 +89,7 @@ var ContextTooltip = Class.create({
     this.createBoundedMethod('initializeTooltip');
     this.createBoundedMethod('log');
     this.createBoundedMethod('hideByClick');
+    this.createBoundedMethod('hideWithoutCheck');
   },
 
   createBoundedMethod: function(methodName) {
@@ -132,20 +138,30 @@ var ContextTooltip = Class.create({
   },
 
   createTooltip: function() {
-    this.log("Creating tooltip");
-    var self = this;
-    $$("body").each(function(element) {
-      var tooltip = document.createElement('div');
-      tooltip.id = self.rawTooltipElementId;
-      self.tooltipElement = $(tooltip);
-      element.insert(self.tooltipElement);
-      context_tooltips.set(self.tooltipElement.id, self);
-    });
-    this.log("Tooltip created");
+    var tooltip_element = $(this.rawTooltipElementId);
+    if (this.elementExists(tooltip_element)) {
+      this.log("Tooltip element already created, just using it.");
+      this.tooltipElement = tooltip_element;
+    } else {
+      this.log("Creating tooltip");
+      var self = this;
+      $$("body").each(function(element) {
+        var tooltip = document.createElement('div');
+        tooltip.id = self.rawTooltipElementId;
+        self.tooltipElement = $(tooltip);
+        element.insert(self.tooltipElement);
+        context_tooltips.set(self.tooltipElement.id, self);
+      });
+      this.log("Tooltip created");
+    }
   },
 
   hasTooltipElement: function() {
-    return !(this.tooltipElement == null || this.tooltipElement.id == "");
+    return this.elementExists(this.tooltipElement);
+  },
+
+  elementExists: function(element) {
+    return !(element == null || element.id == "");
   },
 
   registerMouseEvents: function() {
@@ -163,10 +179,11 @@ var ContextTooltip = Class.create({
   },
 
   registerTooltipMouseEvents: function() {
-    if (this.options.displayWhenClicked) {
-      $$('.tooltip .close').invoke('observe', 'click', this.hideByClickBounded);
+    if (!this.options.remoteUrlOptions) {
+      this.registerCloseTooltipEvents();
     }
-    else {
+
+    if (!this.options.displayWhenClicked) {
       // Hovering out from the tooltip element should hide it if necessary.
       this.tooltipElement.observe('mouseout', this.hideBounded);
 
@@ -180,12 +197,18 @@ var ContextTooltip = Class.create({
     }
   },
 
-  registerContextMouseEvents: function() {
-    if (this.options.displayWhenClicked) {
-      this.log("Tooltip will be displayed when clicked.");
-      this.contextElement.observe('click', this.displayWithoutCheckBounded);
+  registerCloseTooltipEvents: function() {
+    // Elements with a "close" class inside tooltips will close the tooltip when clicked.
+    if (this.tooltipElement.id) {
+      $$('#' + this.tooltipElement.id + ' .close').invoke('observe', 'click', this.hideWithoutCheckBounded);
+    } else {
+      // Case the tooltip doesn't have an id.
+      this.tooltipElement.down('.close').invoke('observe', 'click', this.hideWithoutCheckBounded);
     }
-    else {
+  },
+
+  registerContextMouseEvents: function() {
+    if (!this.options.displayWhenClicked) {
       this.log("Tooltip will be displayed when hovered.");
 
       // The show/hide events are binded to the mouse over and mouse out,
@@ -205,6 +228,11 @@ var ContextTooltip = Class.create({
         this.log("Clicking on the context will keep the tooltip visible.");
       }
     }
+  },
+
+  registerClickedContextMouseEvents: function() {
+    this.log("Tooltip will be displayed when clicked.");
+    this.contextElement.observe('click', this.displayWithoutCheckBounded);
   },
 
   display: function(event) {
@@ -275,6 +303,7 @@ var ContextTooltip = Class.create({
         if (self.options.position != 'none') {
           self.make_positioned();
         }
+        self.registerCloseTooltipEvents();
         self.displayWithEffect();
       }
     }
@@ -358,6 +387,7 @@ var ContextTooltip = Class.create({
   },
 
   hideWithoutCheck: function() {
+    this.log('hiding without check')
     var hideEffect = this.hideEffect();
     if (hideEffect == null) {
       this.tooltipElement.hide();
