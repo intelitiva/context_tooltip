@@ -1,3 +1,8 @@
+0.5.0
+- jQuery implementation can now be used even when the prototype library is loaded (it is now in a separate namespace).
+- Unobtrusive marker class is now 'contextTooltip', instead of 'tooltip'.
+- Mouse coordinates are not updated when displayWhenClicked is true, since it wouldn't be used anyway.
+
 0.4.0
 - Ajax Tooltip elements are created only when the document is ready now.
 - Ajax Tooltip elements are positioned only after their content is loaded, i.e, ajax call returned successfully.
