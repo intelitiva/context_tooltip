@@ -17,6 +17,12 @@ function closeContextTooltip(tooltip_element_id) {
   context_tooltip.hideWithoutCheck();
 }
 
+function initUnobtrusiveContextTooltip() {
+  $$('.contextTooltip').each(function(element) {
+    context_tooltips.set(element.id, new ContextTooltip(element));
+  })
+}
+
 var ContextTooltip = Class.create({
   initialize: function(tooltipElement, options) {
     this.rawTooltipElementId = this.toId(tooltipElement);
@@ -30,6 +36,7 @@ var ContextTooltip = Class.create({
     this.currentMouseY = 0;
 
     this.options = {
+      debug: false,
       onWindowLoad: true,
       displayWhenClicked: false,
       delayWhenDisplaying: true,
@@ -55,24 +62,14 @@ var ContextTooltip = Class.create({
 
     this.clearScrollOffset();
 
-    // If an element with this id is set, we will update it every time a log
-    // is added.
-    this._logger = $('javascript-log');
-
     this.createBoundedMethods();
-
-    if (this.options.displayWhenClicked) {
-      this.registerClickedContextMouseEvents();
-    }
-
     this.initializeTooltipDelayedIfNecessary();
   },
 
   log: function(msg) {
-    if (this._logger != null) {
-      tooltipElementId = this.hasTooltipElement() ? this.tooltipElement.id : this.rawTooltipElementId;
-      this._logger.insert("<p>" + Date() + " " + msg + " [" + tooltipElementId + "/" + this.contextElement.id + "]" + "</p>");
-      this._logger.scrollTop = this._logger.scrollHeight;
+    if (this.options.debug) {
+      var tooltipElementId = this.hasTooltipElement() ? this.tooltipElement.id : this.rawTooltipElementId;
+      console.log(Date() + " " + msg + " [" + tooltipElementId + "/" + this.contextElement.id + "]");
     }
   },
 
@@ -97,6 +94,10 @@ var ContextTooltip = Class.create({
   },
 
   initializeTooltipDelayedIfNecessary: function() {
+    if (this.options.displayWhenClicked) {
+      this.registerClickedContextMouseEvents();
+    }
+
     if (this.options.onWindowLoad) {
       if (this.hasTooltipElement()) {
         this.log('It has a tooltip element, it will be initialized when the page is loaded.');
@@ -173,9 +174,11 @@ var ContextTooltip = Class.create({
   },
 
   registerExtraMouseEvents: function() {
-    // We need the current mouse position, so we observe each mouse move event
-    // on the document and update the mouse position accordingly.
-    document.observe('mousemove', this.updateCurrentMousePositionBounded);
+    if (!this.options.displayWhenClicked) {
+      // We need the current mouse position, so we observe each mouse move event
+      // on the document and update the mouse position accordingly.
+      document.observe('mousemove', this.updateCurrentMousePositionBounded);
+    }
   },
 
   registerTooltipMouseEvents: function() {
@@ -190,8 +193,7 @@ var ContextTooltip = Class.create({
       if (this.options.click == 'hide') {
         this.log("Clicking on the tooltip will hide it.");
         this.tooltipElement.observe('mousedown', this.hideByClickBounded);
-      }
-      else {
+      } else {
         this.log("Clicking on the tooltip will keep it visible.");
       }
     }
@@ -223,8 +225,7 @@ var ContextTooltip = Class.create({
       if (this.options.contextClick == 'hide') {
         this.log("Clicking on the context will hide the tooltip.");
         this.contextElement.observe('mousedown', this.hideByClickBounded);
-      }
-      else {
+      } else {
         this.log("Clicking on the context will keep the tooltip visible.");
       }
     }
@@ -238,8 +239,7 @@ var ContextTooltip = Class.create({
   display: function(event) {
     if (this.options.delayWhenDisplaying) {
       this.displayDelayed(null);
-    }
-    else {
+    } else {
       // We always need to delay the show/hide event a little bit, because the
       // mouseover event is fired when the user passes its mouse over the first
       // pixel of the element. Unfortunately, browsers do not return the
@@ -278,8 +278,7 @@ var ContextTooltip = Class.create({
   displayEffect: function() {
     if (this.options.displayEffect == 'appear') {
       return Effect.Appear;
-    }
-    else {
+    } else {
       return null;
     }
   },
@@ -288,8 +287,7 @@ var ContextTooltip = Class.create({
     var displayEffect = this.displayEffect();
     if (displayEffect == null) {
       this.tooltipElement.show();
-    }
-    else {
+    } else {
       new displayEffect(this.tooltipElement, this.options.displayEffectOptions);
     }
   },
@@ -365,8 +363,7 @@ var ContextTooltip = Class.create({
   hide: function(event) {
     if (this.options.delayWhenHiding) {
       this.hideDelayed(event, null);
-    }
-    else {
+    } else {
       // We always need to delay the show/hide event a little bit, because the
       // mouseover event is fired when the user passes its mouse over the first
       // pixel of the element. Unfortunately, browsers do not return the
@@ -391,8 +388,7 @@ var ContextTooltip = Class.create({
     var hideEffect = this.hideEffect();
     if (hideEffect == null) {
       this.tooltipElement.hide();
-    }
-    else {
+    } else {
       new hideEffect(this.tooltipElement, this.options.hideEffectOptions);
     }
   },
@@ -407,8 +403,7 @@ var ContextTooltip = Class.create({
   hideEffect: function() {
     if (this.options.hideEffect == 'fade') {
       return Effect.Fade;
-    }
-    else {
+    } else {
       return null;
     }
   },
@@ -526,10 +521,4 @@ var ContextTooltip = Class.create({
   }
 });
 
-function init_unobtrusive_context_tooltip() {
-  $$('.tooltip').each(function(element) {
-    context_tooltips.set(element.id, new ContextTooltip(element, { onWindowLoad: false }));
-  })
-}
-
-Event.observe(window, 'load', init_unobtrusive_context_tooltip);
+Event.observe(window, 'load', initUnobtrusiveContextTooltip);

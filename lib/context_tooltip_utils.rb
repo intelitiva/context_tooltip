@@ -11,11 +11,11 @@ class ContextTooltipUtils
 
     protected
       def prototype_unobtrusive
-        "Event.observe(window, 'load', init_unobtrusive_context_tooltip);"
+        "Event.observe(window, 'load', initUnobtrusiveContextTooltip);"
       end
 
       def jquery_unobtrusive
-        "$(document).ready(init_unobtrusive_context_tooltip);"
+        "$(document).ready(initUnobtrusiveContextTooltip);"
       end
 
       def context_tooltip_javascript_library_path(library, suffix = "")
