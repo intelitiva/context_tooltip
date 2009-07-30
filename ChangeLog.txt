@@ -1,3 +1,6 @@
+0.5.1
+- Make all javascript files pass on JSLint (http://jslint.com). The only errors left were implicit global ones, which cannot be fixed anyway.
+
 0.5.0
 - jQuery implementation can now be used even when the prototype library is loaded (it is now in a separate namespace).
 - Unobtrusive marker class is now 'contextTooltip', instead of 'tooltip'.

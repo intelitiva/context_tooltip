@@ -15,8 +15,8 @@ function initUnobtrusiveContextTooltip() {
 (function($){
 
   /* Holds references to context tooltips. */
-  $.context_tooltips = new Object;
-  $.context_tooltips._tooltips = new Object;
+  $.context_tooltips = {};
+  $.context_tooltips._tooltips = {};
 
   /* Default options for context tooltips. */
   $.context_tooltips.defaults = {
@@ -140,13 +140,13 @@ function initUnobtrusiveContextTooltip() {
     },
 
     createTooltip: function() {
-      var tooltip_element = $('#' + this.rawTooltipElementId)
+      var tooltip_element = $('#' + this.rawTooltipElementId);
       if (this.elementExists(tooltip_element)) {
         this.log("Tooltip element already created, just using it.");
         this.tooltipElement = tooltip_element;
       } else {
         this.log("Creating tooltip");
-        $("body").append('<div id="' + this.rawTooltipElementId + '"></div>')
+        $("body").append('<div id="' + this.rawTooltipElementId + '"></div>');
         this.tooltipElement = $('#' + this.rawTooltipElementId);
         this.log("Tooltip created");
       }
@@ -165,7 +165,7 @@ function initUnobtrusiveContextTooltip() {
     },
 
     elementExists: function(element) {
-      return !(element == null || element.size() == 0 || element.attr('id') == "");
+      return !(element === null || element.size() === 0 || element.attr('id') === "");
     },
 
     registerMouseEvents: function() {
@@ -234,7 +234,7 @@ function initUnobtrusiveContextTooltip() {
 
     registerCloseTooltipEvents: function() {
       // Elements with a "close" class inside tooltips will close the tooltip when clicked.
-      this.log("Registering close events for elements with 'close' class.")
+      this.log("Registering close events for elements with 'close' class.");
       this.tooltipElement.find('.close').click(this.closeBounded);
     },
 
@@ -270,7 +270,7 @@ function initUnobtrusiveContextTooltip() {
 
     displayWithoutCheck: function() {
       if (this.options.remoteUrlOptions) {
-        this.tooltipElement.html('') // emptying the tooltip element.
+        this.tooltipElement.html(''); // emptying the tooltip element.
       }
 
       if (this.options.position != 'none') {
@@ -297,7 +297,7 @@ function initUnobtrusiveContextTooltip() {
         dataType: 'html',
         type: 'get',
         success: this.updateTooltipContentsBounded
-      }
+      };
 
       $.ajax($.extend(defaultUrlOptions, this.options.remoteUrlOptions));
     },
@@ -413,11 +413,11 @@ function initUnobtrusiveContextTooltip() {
     },
 
     shouldHideByTooltipClick: function(event) {
-      return this.options.click == 'hide' && this.tooltipClicked(event)
+      return this.options.click == 'hide' && this.tooltipClicked(event);
     },
 
     shouldHideByContextClick: function(event) {
-      return this.options.contextClick == 'hide' && this.contextClicked(event)
+      return this.options.contextClick == 'hide' && this.contextClicked(event);
     },
 
     isContained: function(object, x, y) {
@@ -475,9 +475,9 @@ function initUnobtrusiveContextTooltip() {
     },
 
     log: function(message) {
-      if (this.options.debug) {
+      if (this.options.debug && window.console && window.console.log) {
         var tooltipElementId = this.hasTooltipElement() ? this.tooltipElement.attr('id') : this.rawTooltipElementId;
-        console.log(Date() + " " + message + " [" + tooltipElementId + "/" + this.contextElement.attr('id') + "]");
+        window.console.log(Date() + " " + message + " [" + tooltipElementId + "/" + this.contextElement.attr('id') + "]");
       }
     },
 
@@ -485,7 +485,7 @@ function initUnobtrusiveContextTooltip() {
       var self = this;
       self[methodName + "Bounded"] = function(event) {
         return self[methodName].apply(self, [event || window.event].concat(arguments));
-      }
+      };
     },
 
     callDelayed: function(delay, methodName, event) {
@@ -506,7 +506,7 @@ function initUnobtrusiveContextTooltip() {
       $.context_tooltips.set($.context_tooltips.toId(this.selector), new ContextTooltip(this.selector, options));
       return this;
     }
-  }
+  };
 
 })(jQuery);
 

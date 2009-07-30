@@ -2,27 +2,6 @@
 // HTML ID.
 var context_tooltips = $H();
 
-function addContextTooltip(tooltip_elements, options) {
-  if ($$(tooltip_elements).size() > 0) {
-    $$(tooltip_elements).each(function(element) {
-      context_tooltips.set(element.id, new ContextTooltip(element, options));
-    });
-  } else {
-    new ContextTooltip(tooltip_elements, options);
-  }
-}
-
-function closeContextTooltip(tooltip_element_id) {
-  var context_tooltip = context_tooltips.get(tooltip_element_id);
-  context_tooltip.hideWithoutCheck();
-}
-
-function initUnobtrusiveContextTooltip() {
-  $$('.contextTooltip').each(function(element) {
-    context_tooltips.set(element.id, new ContextTooltip(element));
-  })
-}
-
 var ContextTooltip = Class.create({
   initialize: function(tooltipElement, options) {
     this.rawTooltipElementId = this.toId(tooltipElement);
@@ -67,9 +46,9 @@ var ContextTooltip = Class.create({
   },
 
   log: function(msg) {
-    if (this.options.debug) {
+    if (this.options.debug && window.console && window.console.log) {
       var tooltipElementId = this.hasTooltipElement() ? this.tooltipElement.id : this.rawTooltipElementId;
-      console.log(Date() + " " + msg + " [" + tooltipElementId + "/" + this.contextElement.id + "]");
+      window.console.log(Date() + " " + msg + " [" + tooltipElementId + "/" + this.contextElement.id + "]");
     }
   },
 
@@ -90,7 +69,7 @@ var ContextTooltip = Class.create({
   },
 
   createBoundedMethod: function(methodName) {
-    this[methodName + "Bounded"] = this[methodName].bindAsEventListener(this)
+    this[methodName + "Bounded"] = this[methodName].bindAsEventListener(this);
   },
 
   initializeTooltipDelayedIfNecessary: function() {
@@ -162,7 +141,7 @@ var ContextTooltip = Class.create({
   },
 
   elementExists: function(element) {
-    return !(element == null || element.id == "");
+    return !(element === null || element.id === "");
   },
 
   registerMouseEvents: function() {
@@ -261,7 +240,7 @@ var ContextTooltip = Class.create({
 
   displayWithoutCheck: function() {
     if (this.options.remoteUrlOptions) {
-      this.tooltipElement.update('') // emptying the tooltip element.
+      this.tooltipElement.update(''); // emptying the tooltip element.
     }
 
     if (this.options.position != 'none') {
@@ -285,10 +264,10 @@ var ContextTooltip = Class.create({
 
   displayWithEffect: function() {
     var displayEffect = this.displayEffect();
-    if (displayEffect == null) {
+    if (displayEffect === null) {
       this.tooltipElement.show();
     } else {
-      new displayEffect(this.tooltipElement, this.options.displayEffectOptions);
+      this.currentEffect = new displayEffect(this.tooltipElement, this.options.displayEffectOptions);
     }
   },
 
@@ -304,10 +283,10 @@ var ContextTooltip = Class.create({
         self.registerCloseTooltipEvents();
         self.displayWithEffect();
       }
-    }
+    };
 
     var remoteUrlOptions = Object.extend(defaultUrlOptions, this.options.remoteUrlOptions);
-    new Ajax.Request(this.options.remoteUrlOptions.url, remoteUrlOptions);
+    this.request = new Ajax.Request(this.options.remoteUrlOptions.url, remoteUrlOptions);
   },
 
   make_positioned: function() {
@@ -384,12 +363,12 @@ var ContextTooltip = Class.create({
   },
 
   hideWithoutCheck: function() {
-    this.log('hiding without check')
+    this.log('hiding without check');
     var hideEffect = this.hideEffect();
-    if (hideEffect == null) {
+    if (hideEffect === null) {
       this.tooltipElement.hide();
     } else {
-      new hideEffect(this.tooltipElement, this.options.hideEffectOptions);
+      this.currentEffect = new hideEffect(this.tooltipElement, this.options.hideEffectOptions);
     }
   },
 
@@ -417,11 +396,11 @@ var ContextTooltip = Class.create({
   },
 
   shouldHideByTooltipClick: function(event) {
-    return this.options.click == 'hide' && this.tooltipClicked(event)
+    return this.options.click == 'hide' && this.tooltipClicked(event);
   },
 
   shouldHideByContextClick: function(event) {
-    return this.options.contextClick == 'hide' && this.contextClicked(event)
+    return this.options.contextClick == 'hide' && this.contextClicked(event);
   },
 
   isContained: function(object, x, y) {
@@ -442,14 +421,8 @@ var ContextTooltip = Class.create({
   },
 
   calculateScrollOffset: function(object) {
-    var deltaX =  window.pageXOffset
-                || document.documentElement.scrollLeft
-                || document.body.scrollLeft
-                || 0;
-    var deltaY =  window.pageYOffset
-                || document.documentElement.scrollTop
-                || document.body.scrollTop
-                || 0;
+    var deltaX =  window.pageXOffset || document.documentElement.scrollLeft || document.body.scrollLeft || 0;
+    var deltaY =  window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
 
     var scrollOffset = object.cumulativeScrollOffset();
     this.scrollOffsetX = deltaX - scrollOffset.left;
@@ -520,5 +493,27 @@ var ContextTooltip = Class.create({
     return null;
   }
 });
+
+function addContextTooltip(tooltip_elements, options) {
+  if ($$(tooltip_elements).size() > 0) {
+    $$(tooltip_elements).each(function(element) {
+      context_tooltips.set(element.id, new ContextTooltip(element, options));
+    });
+  } else {
+    context_tooltip = new ContextTooltip(tooltip_elements, options);
+  }
+}
+
+function closeContextTooltip(tooltip_element_id) {
+  var context_tooltip = context_tooltips.get(tooltip_element_id);
+  context_tooltip.hideWithoutCheck();
+}
+
+function initUnobtrusiveContextTooltip() {
+  $$('.contextTooltip').each(function(element) {
+    context_tooltips.set(element.id, new ContextTooltip(element));
+  });
+}
+
 
 Event.observe(window, 'load', initUnobtrusiveContextTooltip);
